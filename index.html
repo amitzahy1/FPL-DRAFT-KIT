@@ -93,15 +93,12 @@
             <p class="text-lg text-gray-600 mt-2">כלי עזר לבחירת שחקנים בדראפט, מבוסס נתוני FPL API</p>
         </header>
         
-        <!-- Alert Box -->
         <div id="alert-box" class="fixed top-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform -translate-y-12 z-50">
             <p id="alert-message"></p>
         </div>
 
-        <!-- Main Content -->
         <div id="main-content" class="hidden">
             
-            <!-- Filters & Toggles -->
             <div class="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <input type="text" id="search-player" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="חיפוש שחקן...">
@@ -128,8 +125,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <!-- Available Players Table -->
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div class="lg:col-span-3">
                     <h2 class="text-2xl font-bold mb-4">שחקנים פנויים</h2>
                     <div class="overflow-x-auto bg-white rounded-lg shadow">
@@ -153,8 +149,7 @@
                     </div>
                 </div>
 
-                <!-- Visual Team View -->
-                <div class="lg:col-span-1">
+                <div class="lg:col-span-2">
                      <div class="flex justify-between items-center mb-2">
                         <h2 class="text-2xl font-bold">הקבוצה שלי</h2>
                         <div class="text-left">
@@ -171,7 +166,7 @@
                         </div>
                         <div class="font-bold text-lg"><span id="drafted-count">0</span>/15</div>
                     </div>
-                    <div id="pitch" class="pitch h-[550px] p-2 rounded-lg flex flex-col justify-around">
+                    <div id="pitch" class="pitch h-[500px] p-2 rounded-lg flex flex-col justify-around">
                          <div class="pitch-line center-line"></div>
                          <div class="pitch-line center-circle"></div>
                          <div class="pitch-line penalty-box box-top"></div>
@@ -182,12 +177,15 @@
                          <div class="relative"><div class="absolute -top-2 right-2 text-white text-xs opacity-70">מגנים</div><div id="defenders" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
                          <div class="relative"><div class="absolute -top-2 right-2 text-white text-xs opacity-70">שוערים</div><div id="goalkeepers" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
                     </div>
+                    <div class="mt-4">
+                        <h3 class="text-xl font-bold mb-2 text-center">ספסל</h3>
+                        <div id="bench" class="bg-gray-200 p-2 rounded-lg flex justify-center items-center gap-2 flex-wrap min-h-[120px]"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
-     <!-- Loading Spinner -->
     <div id="loader-container" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
         <div class="loader"></div>
         <p class="ml-4 text-lg text-white">טוען נתונים עדכניים...</p>
@@ -202,9 +200,7 @@
             let draftedPlayers = JSON.parse(localStorage.getItem('draftedPlayers')) || [];
             let sortConfig = { key: 'fpl_potential_rank', direction: 'desc' };
 
-            const SQUAD_LIMITS = {
-                TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3
-            };
+            const SQUAD_LIMITS = { TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3 };
 
             const loader = document.getElementById('loader-container');
             const mainContent = document.getElementById('main-content');
@@ -368,20 +364,50 @@
                 document.getElementById('mid-count').textContent = `${positions.MID.length}`;
                 document.getElementById('fwd-count').textContent = `${positions.FWD.length}`;
 
-                Object.entries(positions).forEach(([pos, players]) => {
-                    const container = document.getElementById(pos.toLowerCase() + 's');
-                    container.innerHTML = players.map(p => {
-                        const shirtColor = p.team_name === 'Arsenal' ? 'bg-red-500' : p.team_name === 'Man City' ? 'bg-sky-400' : p.team_name === 'Liverpool' ? 'bg-red-600' : 'bg-gray-700';
-                        const textColor = p.team_name === 'Man City' ? 'text-black' : 'text-white';
-                        return `
-                            <div class="player-shirt w-20 h-24 ${shirtColor} ${textColor} text-xs font-bold undraft-btn" data-id="${p.id}">
-                                <span class="font-bold text-sm">${p.web_name}</span>
-                                <span class="text-xs opacity-80">${p.position}</span>
-                                <span class="text-lg mt-1">£${(p.now_cost / 10).toFixed(1)}</span>
-                            </div>
-                        `;
-                    }).join('');
+                const pitchContainers = {
+                    'GKP': document.getElementById('goalkeepers'),
+                    'DEF': document.getElementById('defenders'),
+                    'MID': document.getElementById('midfielders'),
+                    'FWD': document.getElementById('forwards')
+                };
+                const benchContainer = document.getElementById('bench');
+                Object.values(pitchContainers).forEach(el => el.innerHTML = '');
+                benchContainer.innerHTML = '';
+
+                const bench = [];
+                const startingXI = { 'GKP': [], 'DEF': [], 'MID': [], 'FWD': [] };
+
+                // Logic to populate starting XI and bench
+                startingXI.GKP = positions.GKP.slice(0, 1);
+                bench.push(...positions.GKP.slice(1));
+                
+                startingXI.DEF = positions.DEF.slice(0, 5);
+                bench.push(...positions.DEF.slice(5));
+
+                startingXI.MID = positions.MID.slice(0, 5);
+                bench.push(...positions.MID.slice(5));
+
+                startingXI.FWD = positions.FWD.slice(0, 3);
+                bench.push(...positions.FWD.slice(3));
+
+                function renderPlayerShirt(p) {
+                    const shirtColor = p.team_name === 'Arsenal' ? 'bg-red-500' : p.team_name === 'Man City' ? 'bg-sky-400' : p.team_name === 'Liverpool' ? 'bg-red-600' : 'bg-gray-700';
+                    const textColor = p.team_name === 'Man City' ? 'text-black' : 'text-white';
+                    return `
+                        <div class="player-shirt w-20 h-24 ${shirtColor} ${textColor} text-xs font-bold undraft-btn" data-id="${p.id}">
+                            <span class="font-bold text-sm">${p.web_name}</span>
+                            <span class="text-xs opacity-80">${p.position}</span>
+                            <span class="text-lg mt-1">£${(p.now_cost / 10).toFixed(1)}</span>
+                        </div>
+                    `;
+                }
+
+                Object.entries(startingXI).forEach(([pos, players]) => {
+                    const container = pitchContainers[pos];
+                    container.innerHTML = players.map(renderPlayerShirt).join('');
                 });
+
+                benchContainer.innerHTML = bench.map(renderPlayerShirt).join('');
             }
             
             function showAlert(message) {
@@ -404,7 +430,6 @@
 
                 const draftedPlayerObjects = draftedPlayers.map(id => allPlayers.find(p => p.id === id)).filter(Boolean);
                 
-                // Check limits
                 if(draftedPlayerObjects.length >= SQUAD_LIMITS.TOTAL) {
                     showAlert(`הגעת למכסה המקסימלית של ${SQUAD_LIMITS.TOTAL} שחקנים.`);
                     return;
@@ -458,6 +483,7 @@
 
             document.getElementById('players-table-body').addEventListener('click', handleDraft);
             document.getElementById('pitch').addEventListener('click', handleUndraft);
+            document.getElementById('bench').addEventListener('click', handleUndraft);
             document.querySelector('thead').addEventListener('click', handleSort);
             document.getElementById('search-player').addEventListener('input', renderPlayersTable);
             document.getElementById('position-filter').addEventListener('change', renderPlayersTable);
@@ -470,7 +496,6 @@
                     render();
                 }
             });
-            document.getElementById('mode-toggle').addEventListener('change', handleModeToggle);
         });
     </script>
 </body>
