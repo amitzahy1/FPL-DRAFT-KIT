@@ -31,47 +31,57 @@
         .rank-bar {
              background: linear-gradient(to right, #d1d5db, #6ee7b7, #10b981);
         }
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-        .status-a { color: #16a34a; } /* green-600 */
-        .status-i { color: #dc2626; } /* red-600 */
-        .status-d { color: #f59e0b; } /* amber-500 */
-        .status-s { color: #f97316; } /* orange-500 */
-        .status-u { color: #6b7280; } /* gray-500 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .status-a { color: #16a34a; }
+        .status-i { color: #dc2626; }
+        .status-d { color: #f59e0b; }
+        .status-s { color: #f97316; }
+        .status-u { color: #6b7280; }
         
-        /* Tooltip styles */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
+        .tooltip { position: relative; display: inline-block; }
         .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 220px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px 10px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -110px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.875rem;
-            direction: ltr;
+            visibility: hidden; width: 220px; background-color: #555; color: #fff; text-align: center;
+            border-radius: 6px; padding: 5px 10px; position: absolute; z-index: 1; bottom: 125%;
+            left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.3s;
+            font-size: 0.875rem; direction: ltr;
         }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+        .pitch {
+            background-color: #008053;
+            border: 2px solid #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .pitch-line { background-color: rgba(255,255,255,0.5); position: absolute; }
+        .center-line { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
+        .center-circle { width: 100px; height: 100px; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .penalty-box { border: 2px solid rgba(255,255,255,0.5); position: absolute; }
+        .box-top { height: 100px; width: 60%; top: 0; left: 20%; }
+        .box-bottom { height: 100px; width: 60%; bottom: 0; left: 20%; }
+
+        .player-shirt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            padding: 2px 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            position: relative;
+            min-width: 64px;
+        }
+        .toggle-dot {
+             transition: transform .3s ease-in-out;
+        }
+        input:checked ~ .toggle-dot {
+            transform: translateX(100%);
+            background-color: #48bb78;
+        }
+        #alert-box {
+            transition: opacity 0.5s, transform 0.5s;
         }
     </style>
 </head>
@@ -81,55 +91,40 @@
         <header class="text-center mb-6">
             <h1 class="text-4xl font-bold text-gray-900">FPL Live Draft Kit</h1>
             <p class="text-lg text-gray-600 mt-2">כלי עזר לבחירת שחקנים בדראפט, מבוסס נתוני FPL API</p>
-            <div class="mt-4 max-w-2xl mx-auto bg-blue-50 border-r-4 border-blue-500 text-blue-800 p-4 rounded-lg text-right">
-                <p class="font-bold">איך הדירוג מחושב?</p>
-                <p class="text-sm">הדירוג מבוסס על מדדי הפוטנציאל של FPL. הוא משקלל את מדד ה-**ICT** (השפעה, יצירתיות ואיום) ואת מדד ה-**BPS** (נקודות בונוס), עם משקולות שונות לכל עמדה, כדי להעריך את הפוטנציאל של כל שחקן לצבור נקודות.</p>
-            </div>
         </header>
-
-        <!-- Loading Spinner -->
-        <div id="loader-container" class="flex justify-center items-center h-64">
-            <div class="loader"></div>
-            <p class="ml-4 text-lg">טוען נתונים עדכניים...</p>
+        
+        <!-- Alert Box -->
+        <div id="alert-box" class="fixed top-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform -translate-y-12 z-50">
+            <p id="alert-message"></p>
         </div>
 
         <!-- Main Content -->
         <div id="main-content" class="hidden">
             
-            <!-- Filters -->
-            <div class="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                <div class="w-full">
-                    <label for="search-player" class="block text-sm font-medium text-gray-700">חיפוש שחקן</label>
-                    <input type="text" id="search-player" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="הקלד שם שחקן...">
-                </div>
-                <div class="w-full">
-                    <label for="position-filter" class="block text-sm font-medium text-gray-700">סינון לפי עמדה</label>
-                    <select id="position-filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <!-- Filters & Toggles -->
+            <div class="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <input type="text" id="search-player" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="חיפוש שחקן...">
+                    <select id="position-filter" class="w-full rounded-md border-gray-300 shadow-sm">
                         <option value="all">כל העמדות</option>
                         <option value="GKP">שוערים (GKP)</option>
                         <option value="DEF">הגנה (DEF)</option>
                         <option value="MID">קישור (MID)</option>
                         <option value="FWD">התקפה (FWD)</option>
                     </select>
-                </div>
-                <div class="w-full">
-                    <label for="status-filter" class="block text-sm font-medium text-gray-700">סינון לפי סטטוס</label>
-                    <select id="status-filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="all">הכל</option>
+                    <select id="status-filter" class="w-full rounded-md border-gray-300 shadow-sm">
+                        <option value="all">כל הסטטוסים</option>
                         <option value="a">זמינים</option>
                         <option value="d">בספק</option>
                         <option value="i">פצועים</option>
-                        <option value="s">מושעים</option>
                     </select>
                 </div>
-                <div class="w-full flex items-center justify-center pt-6">
-                     <input id="show-new-players-only" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                     <label for="show-new-players-only" class="mr-2 block text-sm text-gray-900">הצג רק שחקנים חדשים</label>
-                </div>
-                 <div class="w-full">
-                    <button id="reset-draft" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                        איפוס דראפט
-                    </button>
+                <div class="flex items-center justify-around">
+                    <div class="flex items-center">
+                        <input id="show-new-players-only" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        <label for="show-new-players-only" class="mr-2 text-sm text-gray-900">רק חדשים</label>
+                    </div>
+                    <button id="reset-draft" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md">איפוס</button>
                 </div>
             </div>
 
@@ -141,34 +136,61 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="web_name">שחקן</th>
-                                    <th scope="col" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="fpl_potential_rank">דירוג</th>
-                                    <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="minutes_per_game">דקות/משחק</th>
-                                    <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="selected_by_percent">אחוז החזקה</th>
-                                    <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="total_points">סה"כ נק'</th>
-                                    <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="goals_scored">שערים</th>
-                                    <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="assists">בישולים</th>
-                                    <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="clean_sheets">ש"נ</th>
-                                    <th scope="col" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="status">סטטוס</th>
-                                    <th scope="col" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500" data-sort="web_name">שחקן</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500" data-sort="fpl_potential_rank">דירוג</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="points_per_game">נק'/משחק</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="minutes_per_game">דק'/משחק</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="selected_by_percent">החזקה</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="total_points">סה"כ נק'</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="goals_scored">שערים</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="assists">בישולים</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="clean_sheets">ש"נ</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="status">סטטוס</th>
                                 </tr>
                             </thead>
-                            <tbody id="players-table-body" class="bg-white divide-y divide-gray-200">
-                                <!-- Player rows will be injected here by JavaScript -->
-                            </tbody>
+                            <tbody id="players-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Drafted Players List -->
+                <!-- Visual Team View -->
                 <div class="lg:col-span-1">
-                    <h2 class="text-2xl font-bold mb-4">שחקנים שנבחרו (<span id="drafted-count">0</span>)</h2>
-                    <div id="drafted-players-list" class="bg-white p-4 rounded-lg shadow-md max-h-[600px] overflow-y-auto space-y-2 no-scrollbar">
-                        <!-- Drafted player items will be injected here -->
+                     <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-2xl font-bold">הקבוצה שלי</h2>
+                        <div class="text-left">
+                            <div class="font-bold text-lg">£<span id="total-cost">0.0</span>m</div>
+                            <div class="text-xs text-gray-500">שווי קבוצה</div>
+                        </div>
+                    </div>
+                     <div class="flex justify-between items-center mb-4 bg-gray-200 p-2 rounded-lg">
+                        <div id="squad-counts" class="text-xs font-semibold grid grid-cols-4 gap-1 text-center">
+                            <div>שוערים: <span id="gkp-count">0</span>/2</div>
+                            <div>מגנים: <span id="def-count">0</span>/5</div>
+                            <div>קשרים: <span id="mid-count">0</span>/5</div>
+                            <div>חלוצים: <span id="fwd-count">0</span>/3</div>
+                        </div>
+                        <div class="font-bold text-lg"><span id="drafted-count">0</span>/15</div>
+                    </div>
+                    <div id="pitch" class="pitch h-[550px] p-2 rounded-lg flex flex-col justify-around">
+                         <div class="pitch-line center-line"></div>
+                         <div class="pitch-line center-circle"></div>
+                         <div class="pitch-line penalty-box box-top"></div>
+                         <div class="pitch-line penalty-box box-bottom"></div>
+                         
+                         <div class="relative"><div class="absolute -top-2 right-2 text-white text-xs opacity-70">חלוצים</div><div id="forwards" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
+                         <div class="relative"><div class="absolute -top-2 right-2 text-white text-xs opacity-70">קשרים</div><div id="midfielders" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
+                         <div class="relative"><div class="absolute -top-2 right-2 text-white text-xs opacity-70">מגנים</div><div id="defenders" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
+                         <div class="relative"><div class="absolute -top-2 right-2 text-white text-xs opacity-70">שוערים</div><div id="goalkeepers" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+    
+     <!-- Loading Spinner -->
+    <div id="loader-container" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
+        <div class="loader"></div>
+        <p class="ml-4 text-lg text-white">טוען נתונים עדכניים...</p>
     </div>
 
     <script>
@@ -180,16 +202,19 @@
             let draftedPlayers = JSON.parse(localStorage.getItem('draftedPlayers')) || [];
             let sortConfig = { key: 'fpl_potential_rank', direction: 'desc' };
 
+            const SQUAD_LIMITS = {
+                TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3
+            };
+
             const loader = document.getElementById('loader-container');
             const mainContent = document.getElementById('main-content');
+            mainContent.style.display = 'none';
 
-            // --- 1. Fetch Data ---
             async function fetchData() {
                 try {
                     const fplRes = await fetch(FPL_API_URL);
                     if (!fplRes.ok) throw new Error('Failed to fetch FPL data');
-                    const fplData = await fplRes.json();
-                    return { fplData };
+                    return await fplRes.json();
                 } catch (error) {
                     console.error("Error fetching data:", error);
                     loader.innerHTML = '<p class="text-red-500">שגיאה בטעינת הנתונים. נסה לרענן את הדף.</p>';
@@ -197,21 +222,21 @@
                 }
             }
             
-            // --- 2. Analyze Data ---
-            function analyzeData({ fplData }) {
-                const playersDf = fplData.elements;
+            function analyzeData(fplData) {
+                let playersDf = fplData.elements;
                 const teamsDf = fplData.teams;
                 const positionsDf = fplData.element_types;
 
+                const playerPositionTypes = new Set(positionsDf.filter(p => p.singular_name !== 'Manager').map(p => p.id));
+                playersDf = playersDf.filter(p => playerPositionTypes.has(p.element_type));
+
                 const posMap = new Map(positionsDf.map(p => [p.id, p.singular_name_short]));
                 const teamMap = new Map(teamsDf.map(t => [t.id, t.name]));
+                
                 playersDf.forEach(p => {
                     p.position = posMap.get(p.element_type);
                     p.team_name = teamMap.get(p.team);
-                });
-
-                const numericCols = ['ict_index', 'form', 'bps', 'influence', 'creativity', 'threat', 'total_points', 'goals_scored', 'assists', 'clean_sheets', 'minutes', 'points_per_game', 'selected_by_percent'];
-                playersDf.forEach(p => {
+                    const numericCols = ['ict_index', 'form', 'bps', 'influence', 'creativity', 'threat', 'total_points', 'goals_scored', 'assists', 'clean_sheets', 'minutes', 'points_per_game', 'selected_by_percent', 'now_cost'];
                     numericCols.forEach(col => p[col] = parseFloat(p[col] || 0));
                     const gamesPlayed = p.points_per_game > 0 ? p.total_points / p.points_per_game : 0;
                     p.minutes_per_game = gamesPlayed > 0 ? Math.round(p.minutes / gamesPlayed) : 0;
@@ -220,8 +245,7 @@
                 function scale(values) {
                     const min = Math.min(...values);
                     const max = Math.max(...values);
-                    if (max === min) return values.map(() => 0.5);
-                    return values.map(v => (v - min) / (max - min));
+                    return max === min ? values.map(() => 0.5) : values.map(v => (v - min) / (max - min));
                 }
                 
                 const normalized = {
@@ -250,7 +274,6 @@
                 return playersDf;
             }
 
-            // --- 3. Render UI ---
             function render() {
                 renderPlayersTable();
                 renderDraftedList();
@@ -263,25 +286,17 @@
                 const statusFilter = document.getElementById('status-filter').value;
                 const showNewPlayersOnly = document.getElementById('show-new-players-only').checked;
 
-                let availablePlayers = allPlayers.filter(p => !draftedPlayers.includes(p.id));
+                let filteredPlayers = allPlayers.filter(p => !draftedPlayers.includes(p.id));
 
                 if (showNewPlayersOnly) {
-                    availablePlayers = availablePlayers.filter(p => p.minutes === 0);
+                    filteredPlayers = filteredPlayers.filter(p => p.minutes === 0);
                 }
-
-                let filteredPlayers = availablePlayers;
-
                 if (searchFilter) {
-                    filteredPlayers = filteredPlayers.filter(p => 
-                        p.web_name.toLowerCase().includes(searchFilter) ||
-                        p.team_name.toLowerCase().includes(searchFilter)
-                    );
+                    filteredPlayers = filteredPlayers.filter(p => p.web_name.toLowerCase().includes(searchFilter) || p.team_name.toLowerCase().includes(searchFilter));
                 }
-
                 if (positionFilter !== 'all') {
                     filteredPlayers = filteredPlayers.filter(p => p.position === positionFilter);
                 }
-                
                 if (statusFilter !== 'all') {
                     filteredPlayers = filteredPlayers.filter(p => p.status === statusFilter);
                 }
@@ -305,78 +320,101 @@
                 tableBody.innerHTML = filteredPlayers.map(p => `
                     <tr>
                         <td class="px-3 py-4 whitespace-nowrap">
-                            <div class="font-bold">${p.web_name}</div>
-                            <div class="text-sm text-gray-500">${p.team_name} - ${p.position}</div>
+                            <div class="flex items-center">
+                                <button class="draft-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-md transition ml-3" data-id="${p.id}">בחר</button>
+                                <div>
+                                    <div class="font-bold">${p.web_name}</div>
+                                    <div class="text-sm text-gray-500">${p.team_name} - ${p.position} - £${(p.now_cost / 10).toFixed(1)}m</div>
+                                </div>
+                            </div>
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <span class="font-semibold w-10">${p.fpl_potential_rank.toFixed(1)}</span>
-                                <div class="w-full bg-gray-200 rounded-full h-2.5 ml-2">
-                                    <div class="bg-green-600 h-2.5 rounded-full rank-bar" style="width: ${p.fpl_potential_rank}%"></div>
-                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 ml-2"><div class="bg-green-600 h-2.5 rounded-full rank-bar" style="width: ${p.fpl_potential_rank}%"></div></div>
                             </div>
                         </td>
-                        <td class="px-2 py-4 whitespace-nowrap text-sm font-bold text-center">${p.minutes_per_game}</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${p.selected_by_percent}%</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${p.total_points}</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${p.goals_scored}</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${p.assists}</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-sm text-gray-500 text-center">${p.clean_sheets}</td>
-                        <td class="px-2 py-4 whitespace-nowrap text-center text-xl tooltip">
+                        <td class="px-2 py-4 text-sm font-bold text-center">${p.points_per_game}</td>
+                        <td class="px-2 py-4 text-sm text-gray-500 text-center">${p.minutes_per_game}</td>
+                        <td class="px-2 py-4 text-sm text-gray-500 text-center">${p.selected_by_percent}%</td>
+                        <td class="px-2 py-4 text-sm text-gray-500 text-center">${p.total_points}</td>
+                        <td class="px-2 py-4 text-sm text-gray-500 text-center">${p.goals_scored}</td>
+                        <td class="px-2 py-4 text-sm text-gray-500 text-center">${p.assists}</td>
+                        <td class="px-2 py-4 text-sm text-gray-500 text-center">${p.clean_sheets}</td>
+                        <td class="px-2 py-4 text-center text-xl tooltip">
                             <span class="${statusMap[p.status]?.class || 'status-u'}">${statusMap[p.status]?.icon || '❔'}</span>
                             ${p.news ? `<span class="tooltiptext">${p.news}</span>` : ''}
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-left text-sm font-medium">
-                            <button class="draft-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-md transition" data-id="${p.id}">Draft</button>
                         </td>
                     </tr>
                 `).join('');
             }
             
             function renderDraftedList() {
-                const draftedList = document.getElementById('drafted-players-list');
-                const draftedCount = document.getElementById('drafted-count');
-                
-                draftedCount.textContent = draftedPlayers.length;
-
-                if (draftedPlayers.length === 0) {
-                    draftedList.innerHTML = '<p class="text-gray-500 text-center">עדיין לא נבחרו שחקנים.</p>';
-                    return;
-                }
-
                 const draftedPlayerObjects = draftedPlayers.map(id => allPlayers.find(p => p.id === id)).filter(Boolean);
+                
+                document.getElementById('drafted-count').textContent = draftedPlayerObjects.length;
+                
+                const positions = { 'GKP': [], 'DEF': [], 'MID': [], 'FWD': [] };
+                let totalCost = 0;
+                draftedPlayerObjects.forEach(p => {
+                    positions[p.position].push(p);
+                    totalCost += p.now_cost;
+                });
+                
+                document.getElementById('total-cost').textContent = (totalCost / 10).toFixed(1);
+                
+                document.getElementById('gkp-count').textContent = `${positions.GKP.length}`;
+                document.getElementById('def-count').textContent = `${positions.DEF.length}`;
+                document.getElementById('mid-count').textContent = `${positions.MID.length}`;
+                document.getElementById('fwd-count').textContent = `${positions.FWD.length}`;
 
-                draftedList.innerHTML = draftedPlayerObjects.map((p, index) => `
-                    <div class="p-3 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} border border-gray-200">
-                        <div class="flex justify-between items-center mb-2">
-                            <div>
-                                <span class="font-bold text-md">${index + 1}. ${p.web_name}</span>
-                                <span class="text-sm text-gray-600">(${p.team_name} - ${p.position})</span>
+                Object.entries(positions).forEach(([pos, players]) => {
+                    const container = document.getElementById(pos.toLowerCase() + 's');
+                    container.innerHTML = players.map(p => {
+                        const shirtColor = p.team_name === 'Arsenal' ? 'bg-red-500' : p.team_name === 'Man City' ? 'bg-sky-400' : p.team_name === 'Liverpool' ? 'bg-red-600' : 'bg-gray-700';
+                        const textColor = p.team_name === 'Man City' ? 'text-black' : 'text-white';
+                        return `
+                            <div class="player-shirt w-20 h-24 ${shirtColor} ${textColor} text-xs font-bold undraft-btn" data-id="${p.id}">
+                                <span class="font-bold text-sm">${p.web_name}</span>
+                                <span class="text-xs opacity-80">${p.position}</span>
+                                <span class="text-lg mt-1">£${(p.now_cost / 10).toFixed(1)}</span>
                             </div>
-                            <button class="undraft-btn text-red-500 hover:text-red-700 font-bold text-lg" data-id="${p.id}">✖</button>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 text-center text-xs text-gray-700">
-                             <div class="bg-gray-100 p-1 rounded">
-                                <div class="font-semibold">נקודות</div>
-                                <div>${p.total_points}</div>
-                            </div>
-                            <div class="bg-gray-100 p-1 rounded">
-                                <div class="font-semibold">דקות/משחק</div>
-                                <div>${p.minutes_per_game}</div>
-                            </div>
-                            <div class="bg-gray-100 p-1 rounded">
-                                <div class="font-semibold">אחוז החזקה</div>
-                                <div>${p.selected_by_percent}%</div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+                        `;
+                    }).join('');
+                });
             }
             
-            // --- 4. Event Handlers ---
+            function showAlert(message) {
+                const alertBox = document.getElementById('alert-box');
+                const alertMessage = document.getElementById('alert-message');
+                alertMessage.textContent = message;
+                alertBox.classList.remove('opacity-0', '-translate-y-12');
+                alertBox.classList.add('opacity-100', 'translate-y-0');
+                setTimeout(() => {
+                    alertBox.classList.remove('opacity-100', 'translate-y-0');
+                    alertBox.classList.add('opacity-0', '-translate-y-12');
+                }, 3000);
+            }
+
             function handleDraft(e) {
                 if (!e.target.classList.contains('draft-btn')) return;
                 const playerId = parseInt(e.target.dataset.id);
+                const player = allPlayers.find(p => p.id === playerId);
+                if (!player) return;
+
+                const draftedPlayerObjects = draftedPlayers.map(id => allPlayers.find(p => p.id === id)).filter(Boolean);
+                
+                // Check limits
+                if(draftedPlayerObjects.length >= SQUAD_LIMITS.TOTAL) {
+                    showAlert(`הגעת למכסה המקסימלית של ${SQUAD_LIMITS.TOTAL} שחקנים.`);
+                    return;
+                }
+                const positionCount = draftedPlayerObjects.filter(p => p.position === player.position).length;
+                if(positionCount >= SQUAD_LIMITS[player.position]) {
+                    showAlert(`הגעת למכסה המקסימלית של ${SQUAD_LIMITS[player.position]} שחקנים בעמדת ${player.position}.`);
+                    return;
+                }
+
                 if (!draftedPlayers.includes(playerId)) {
                     draftedPlayers.push(playerId);
                     localStorage.setItem('draftedPlayers', JSON.stringify(draftedPlayers));
@@ -385,8 +423,9 @@
             }
             
             function handleUndraft(e) {
-                if (!e.target.classList.contains('undraft-btn')) return;
-                const playerId = parseInt(e.target.dataset.id);
+                const target = e.target.closest('.undraft-btn');
+                if (!target) return;
+                const playerId = parseInt(target.dataset.id);
                 draftedPlayers = draftedPlayers.filter(id => id !== playerId);
                 localStorage.setItem('draftedPlayers', JSON.stringify(draftedPlayers));
                 render();
@@ -395,16 +434,20 @@
             function handleSort(e) {
                 if (e.target.tagName !== 'TH' || !e.target.dataset.sort) return;
                 const key = e.target.dataset.sort;
-                if (sortConfig.key === key) {
-                    sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-                } else {
-                    sortConfig.key = key;
-                    sortConfig.direction = 'desc';
-                }
+                sortConfig.key = key;
+                sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
                 renderPlayersTable();
             }
+            
+            function handleModeToggle(e) {
+                const modeText = document.getElementById('mode-text');
+                if(e.target.checked) {
+                    modeText.textContent = 'מצב עונה';
+                } else {
+                    modeText.textContent = 'מצב דראפט';
+                }
+            }
 
-            // --- 5. Initialization ---
             const data = await fetchData();
             if (data) {
                 allPlayers = analyzeData(data);
@@ -413,9 +456,8 @@
                 render();
             }
 
-            // Attach event listeners
             document.getElementById('players-table-body').addEventListener('click', handleDraft);
-            document.getElementById('drafted-players-list').addEventListener('click', handleUndraft);
+            document.getElementById('pitch').addEventListener('click', handleUndraft);
             document.querySelector('thead').addEventListener('click', handleSort);
             document.getElementById('search-player').addEventListener('input', renderPlayersTable);
             document.getElementById('position-filter').addEventListener('change', renderPlayersTable);
@@ -428,7 +470,7 @@
                     render();
                 }
             });
-
+            document.getElementById('mode-toggle').addEventListener('change', handleModeToggle);
         });
     </script>
 </body>
