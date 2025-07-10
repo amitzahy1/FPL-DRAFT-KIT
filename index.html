@@ -25,6 +25,12 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* [חדש] Sticky header for table */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
         th {
             cursor: pointer;
         }
@@ -83,6 +89,10 @@
         #alert-box {
             transition: opacity 0.5s, transform 0.5s;
         }
+        /* [חדש] Colored rank numbers */
+        .rank-high { color: #059669; } /* emerald-600 */
+        .rank-mid { color: #ca8a04; } /* yellow-600 */
+        .rank-low { color: #dc2626; } /* red-600 */
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -99,36 +109,33 @@
 
         <div id="main-content" class="hidden">
             
-            <div class="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <input type="text" id="search-player" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="חיפוש שחקן...">
-                    <select id="position-filter" class="w-full rounded-md border-gray-300 shadow-sm">
-                        <option value="all">כל העמדות</option>
-                        <option value="GKP">שוערים (GKP)</option>
-                        <option value="DEF">הגנה (DEF)</option>
-                        <option value="MID">קישור (MID)</option>
-                        <option value="FWD">התקפה (FWD)</option>
-                    </select>
-                    <select id="status-filter" class="w-full rounded-md border-gray-300 shadow-sm">
-                        <option value="all">כל הסטטוסים</option>
-                        <option value="a">זמינים</option>
-                        <option value="d">בספק</option>
-                        <option value="i">פצועים</option>
-                    </select>
+            <div class="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <input type="text" id="search-player" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="חיפוש שחקן...">
+                <select id="team-filter" class="w-full rounded-md border-gray-300 shadow-sm"><option value="all">כל הקבוצות</option></select>
+                <select id="position-filter" class="w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="all">כל העמדות</option>
+                    <option value="GKP">שוערים (GKP)</option>
+                    <option value="DEF">הגנה (DEF)</option>
+                    <option value="MID">קישור (MID)</option>
+                    <option value="FWD">התקפה (FWD)</option>
+                </select>
+                <select id="status-filter" class="w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="all">כל הסטטוסים</option>
+                    <option value="a">זמינים</option>
+                    <option value="d">בספק</option>
+                    <option value="i">פצועים</option>
+                </select>
+                <div class="flex items-center">
+                    <input id="show-new-players-only" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                    <label for="show-new-players-only" class="mr-2 text-sm text-gray-900">רק חדשים</label>
                 </div>
-                <div class="flex items-center justify-around">
-                    <div class="flex items-center">
-                        <input id="show-new-players-only" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <label for="show-new-players-only" class="mr-2 text-sm text-gray-900">רק חדשים</label>
-                    </div>
-                    <button id="reset-draft" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md">איפוס</button>
-                </div>
+                <button id="reset-draft" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md">איפוס</button>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div class="lg:col-span-3">
                     <h2 class="text-2xl font-bold mb-4">שחקנים פנויים</h2>
-                    <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <div class="overflow-auto bg-white rounded-lg shadow max-h-[75vh]">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -138,9 +145,6 @@
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="minutes_per_game">דק'/משחק</th>
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="selected_by_percent">החזקה</th>
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="total_points">סה"כ נק'</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="goals_scored">שערים</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="assists">בישולים</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="clean_sheets">ש"נ</th>
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500" data-sort="status">סטטוס</th>
                                 </tr>
                             </thead>
@@ -280,6 +284,7 @@
                 const searchFilter = document.getElementById('search-player').value.toLowerCase();
                 const positionFilter = document.getElementById('position-filter').value;
                 const statusFilter = document.getElementById('status-filter').value;
+                const teamFilter = document.getElementById('team-filter').value;
                 const showNewPlayersOnly = document.getElementById('show-new-players-only').checked;
 
                 let filteredPlayers = allPlayers.filter(p => !draftedPlayers.includes(p.id));
@@ -295,6 +300,9 @@
                 }
                 if (statusFilter !== 'all') {
                     filteredPlayers = filteredPlayers.filter(p => p.status === statusFilter);
+                }
+                if (teamFilter !== 'all') {
+                    filteredPlayers = filteredPlayers.filter(p => p.team_name === teamFilter);
                 }
 
                 filteredPlayers.sort((a, b) => {
@@ -312,6 +320,12 @@
                     's': { icon: '🟥', title: 'מושעה', class: 'status-s' },
                     'u': { icon: '❔', title: 'לא ידוע', class: 'status-u' }
                 };
+                
+                const getRankColor = (rank) => {
+                    if (rank > 66) return 'rank-high';
+                    if (rank > 33) return 'rank-mid';
+                    return 'rank-low';
+                };
 
                 tableBody.innerHTML = filteredPlayers.map(p => `
                     <tr>
@@ -320,13 +334,13 @@
                                 <button class="draft-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-md transition ml-3" data-id="${p.id}">בחר</button>
                                 <div>
                                     <div class="font-bold">${p.web_name}</div>
-                                    <div class="text-sm text-gray-500">${p.team_name} - ${p.position} - £${(p.now_cost / 10).toFixed(1)}m</div>
+                                    <div class="text-sm text-gray-500">${p.team_name} - £${(p.now_cost / 10).toFixed(1)}m</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <span class="font-semibold w-10">${p.fpl_potential_rank.toFixed(1)}</span>
+                                <span class="font-semibold w-12 text-center ${getRankColor(p.fpl_potential_rank)}">${p.fpl_potential_rank.toFixed(1)}</span>
                                 <div class="w-full bg-gray-200 rounded-full h-2.5 ml-2"><div class="bg-green-600 h-2.5 rounded-full rank-bar" style="width: ${p.fpl_potential_rank}%"></div></div>
                             </div>
                         </td>
@@ -377,7 +391,6 @@
                 const bench = [];
                 const startingXI = { 'GKP': [], 'DEF': [], 'MID': [], 'FWD': [] };
 
-                // Logic to populate starting XI and bench
                 startingXI.GKP = positions.GKP.slice(0, 1);
                 bench.push(...positions.GKP.slice(1));
                 
@@ -403,8 +416,7 @@
                 }
 
                 Object.entries(startingXI).forEach(([pos, players]) => {
-                    const container = pitchContainers[pos];
-                    container.innerHTML = players.map(renderPlayerShirt).join('');
+                    pitchContainers[pos].innerHTML = players.map(renderPlayerShirt).join('');
                 });
 
                 benchContainer.innerHTML = bench.map(renderPlayerShirt).join('');
@@ -464,18 +476,20 @@
                 renderPlayersTable();
             }
             
-            function handleModeToggle(e) {
-                const modeText = document.getElementById('mode-text');
-                if(e.target.checked) {
-                    modeText.textContent = 'מצב עונה';
-                } else {
-                    modeText.textContent = 'מצב דראפט';
-                }
-            }
-
             const data = await fetchData();
             if (data) {
                 allPlayers = analyzeData(data);
+                
+                // Populate team filter
+                const teamFilter = document.getElementById('team-filter');
+                const teams = [...new Set(allPlayers.map(p => p.team_name))].sort();
+                teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team;
+                    option.textContent = team;
+                    teamFilter.appendChild(option);
+                });
+
                 loader.style.display = 'none';
                 mainContent.style.display = 'block';
                 render();
@@ -489,6 +503,7 @@
             document.getElementById('position-filter').addEventListener('change', renderPlayersTable);
             document.getElementById('show-new-players-only').addEventListener('change', renderPlayersTable);
             document.getElementById('status-filter').addEventListener('change', renderPlayersTable);
+            document.getElementById('team-filter').addEventListener('change', renderPlayersTable);
             document.getElementById('reset-draft').addEventListener('click', () => {
                 if(confirm('האם אתה בטוח שברצונך לאפס את הדראפט? כל השחקנים שנבחרו יימחקו.')) {
                     draftedPlayers = [];
