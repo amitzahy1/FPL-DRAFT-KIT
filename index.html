@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPL Draft Kit - Local JSON Loader (Advanced)</title>
+    <title>FPL Draft Kit - V17.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,31 +93,52 @@
         .tooltip { position: relative; }
         .tooltip .tooltiptext {
             visibility: hidden;
-            width: auto;
-            max-width: 500px;
-            white-space: nowrap;
+            width: 320px;
             background-color: #1f2937;
             color: #fff;
             text-align: right;
-            border-radius: 6px;
-            padding: 8px 12px;
+            border-radius: 8px;
+            padding: 12px;
             position: absolute;
             z-index: 20;
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
             opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.8rem;
-            line-height: 1.4;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-        .tooltip .tooltiptext .rank-metric {
-            display: inline-block;
-            margin-left: 10px;
+        .tooltip-title {
+            font-weight: 700;
+            color: #a5f3fc; /* cyan-200 */
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #374151; /* gray-700 */
         }
-        .tooltip .tooltiptext .rank-metric span { font-weight: bold; color: #34d399; }
+        .top-metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #374151; /* gray-700 */
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .metric-name {
+            color: #d1d5db; /* gray-300 */
+        }
+        .metric-weight {
+            font-weight: 600;
+            color: #34d399; /* emerald-400 */
+        }
+        .positive-diff { color: #22c55e; font-weight: bold; }
+        .negative-diff { color: #ef4444; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -167,27 +188,39 @@
             <div class="lg:col-span-3 space-y-8">
                 <div>
                     <h2 class="text-2xl font-bold mb-2">מאגר שחקני FPL</h2>
-                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Standard Filters -->
                         <input type="text" id="fpl-name-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="חיפוש שם שחקן...">
                         <select id="fpl-position-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
                         <select id="fpl-team-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
                         <select id="fpl-status-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
+                        
+                        <!-- New Range Filters -->
+                        <div class="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="price-filter" class="block text-sm font-medium text-gray-700">מחיר מקסימלי: <span id="price-value" class="font-bold"></span></label>
+                                <input type="range" id="price-filter" min="3.5" max="14.0" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="points-filter" class="block text-sm font-medium text-gray-700">מינימום נקודות: <span id="points-value" class="font-bold"></span></label>
+                                <input type="range" id="points-filter" min="0" max="300" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto bg-white rounded-lg shadow max-h-[75vh]">
+                    <div class="overflow-x-auto bg-white rounded-lg shadow max-h-[70vh]">
                         <table id="fpl-players-table" class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="web_name">שחקן</th>
                                     <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="player_rank">FPL Rank</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="total_points">נקודות</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="selected_by_percent">אחוז בעלות</th>
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="now_cost">מחיר</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="total_points">נק'</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="points_per_game">נק'/משחק</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="expected_goal_involvements">xGi</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="xgi_performance">xGi Perf</th>
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="goals_scored">שערים</th>
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="assists">בישולים</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="expected_goals">xG</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="expected_assists">xA</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="expected_goal_involvements">xGi</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="expected_goals_conceded">xGc</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="ict_index">ICT</th>
                                     <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="status">סטטוס</th>
                                 </tr>
                             </thead>
@@ -244,13 +277,12 @@
         const fileNameEl = document.getElementById('file-name');
 
         const rankingWeights = {
-            GKP: { saves: 8, penalties_saved: 10, clean_sheets: 7, bps: 5, influence: 4, expected_goals_conceded: -5 },
-            DEF: { total_points: 4, clean_sheets: 8, goals_scored: 5, assists: 5, bps: 4, ict_index: 3, expected_goals: 2, expected_assists: 3, expected_goals_conceded: -4 },
-            MID: { total_points: 5, goals_scored: 7, assists: 7, points_per_game: 6, ict_index: 6, expected_goals: 8, expected_assists: 8, threat: 5, creativity: 5, bonus: 3 },
-            FWD: { total_points: 5, goals_scored: 9, assists: 5, ict_index: 6, expected_goals: 9, expected_goal_involvements: 8, threat: 7, bonus: 4 }
+            GKP: { xGc_performance: 10, points_per_game: 8, clean_sheets: 6, penalties_saved: 5, saves: 4 },
+            DEF: { points_per_game: 10, expected_goal_involvements: 8, clean_sheets: 7, goals_scored: 4, assists: 4, xGc_performance: 3 },
+            MID: { points_per_game: 10, expected_goal_involvements: 9, xgi_performance: 6, ict_index: 5, threat: 5, actual_goal_involvements: 4 },
+            FWD: { points_per_game: 10, expected_goal_involvements: 9, xgi_performance: 7, threat: 6, actual_goal_involvements: 5, ict_index: 4 }
         };
 
-        // --- Data Loading from File ---
         function loadDataFromFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -289,7 +321,6 @@
             reader.readAsText(file);
         }
 
-        // --- Ranking Calculation ---
         function scaleValues(data, key) {
             const values = data.map(p => parseFloat(p[key])).filter(v => !isNaN(v));
             if (values.length === 0) return data.map(() => 0);
@@ -312,35 +343,43 @@
                 let totalWeight = 0;
                 let weightedScore = 0;
                 const weights = rankingWeights[player.position];
+                player.rank_breakdown = [];
+
                 if (weights) {
                     for (const [metric, weight] of Object.entries(weights)) {
                          if (normalized[metric] && normalized[metric][index] !== undefined) {
-                            weightedScore += normalized[metric][index] * weight;
+                            const metricScore = normalized[metric][index] * weight;
+                            weightedScore += metricScore;
                             totalWeight += Math.abs(weight);
+                            player.rank_breakdown.push({ metric, score: metricScore, weight });
                         }
                     }
                 }
                 player.player_rank = totalWeight > 0 ? (weightedScore / totalWeight) * 100 : 0;
                 player.player_rank = Math.max(0, player.player_rank);
+
+                player.rank_breakdown.sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
             });
         }
         
         function generateRankTooltip(player) {
-            const weights = rankingWeights[player.position];
-            if (!weights) return '';
+            if (!player.rank_breakdown) return '';
             
-            let html = `<div class='font-bold mb-1'>הרכב דירוג (${player.position}):</div>`;
-            let metricsHtml = '';
-            for (const [metric, weight] of Object.entries(weights)) {
-                 if (weight !== 0) {
-                    metricsHtml += `<div class="rank-metric">${metric.replace(/_/g, ' ')}: <span>${weight}</span></div>`;
-                }
-            }
-            return html + '<div>' + metricsHtml + '</div>';
+            const topMetrics = player.rank_breakdown.slice(0, 3);
+
+            let metricsHtml = topMetrics.map(item => {
+                let metricName = item.metric.replace(/_/g, ' ');
+                return `<div class="metric-item">
+                          <span class="metric-name">${metricName}</span>
+                          <span class="metric-weight">משקל: ${item.weight}</span>
+                        </div>`;
+            }).join('');
+
+            return `<div class="tooltip-title">מדדים מובילים לדירוג</div>
+                    <div class="top-metrics-grid">${metricsHtml}</div>`;
         }
 
-        // --- App State and UI Functions ---
-        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v13')));
+        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v17')));
         let fplSortConfig = { key: 'player_rank', direction: 'desc' };
         const SQUAD_LIMITS = { TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3 };
 
@@ -348,10 +387,17 @@
         const fplPosFilterEl = document.getElementById('fpl-position-filter');
         const fplTeamFilterEl = document.getElementById('fpl-team-filter');
         const fplStatusFilterEl = document.getElementById('fpl-status-filter');
+        const priceFilterEl = document.getElementById('price-filter');
+        const priceValueEl = document.getElementById('price-value');
+        const pointsFilterEl = document.getElementById('points-filter');
+        const pointsValueEl = document.getElementById('points-value');
         const modalEl = document.getElementById('confirm-modal');
 
         function setupFilters() {
-            const fplPositions = [...new Set(allPlayersData.map(p => p.position))].filter(Boolean).sort();
+            const playerPositions = ['GKP', 'DEF', 'MID', 'FWD'];
+            const fplPositions = [...new Set(allPlayersData.map(p => p.position))]
+                .filter(p => playerPositions.includes(p))
+                .sort();
             const fplTeams = [...new Set(allPlayersData.map(p => p.team_name))].filter(Boolean).sort();
             fplPosFilterEl.innerHTML = '<option value="">כל העמדות</option>' + fplPositions.map(p => `<option value="${p}">${p}</option>`).join('');
             fplTeamFilterEl.innerHTML = '<option value="">כל הקבוצות</option>' + fplTeams.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -362,6 +408,11 @@
                 <option value="i">פצועים</option>
                 <option value="u">לא זמינים</option>
              `;
+            
+            priceFilterEl.value = priceFilterEl.max;
+            priceValueEl.textContent = `£${priceFilterEl.value}m`;
+            pointsFilterEl.value = pointsFilterEl.min;
+            pointsValueEl.textContent = pointsFilterEl.value;
         }
         
         function sortData(data, config) {
@@ -369,6 +420,11 @@
                 let valA = a[config.key];
                 let valB = b[config.key];
                 if (typeof valA === 'string') {
+                    const numA = parseFloat(valA);
+                    const numB = parseFloat(valB);
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return config.direction === 'asc' ? numA - numB : numB - numA;
+                    }
                     return config.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 }
                 if (valA === null || valA === undefined) valA = -Infinity;
@@ -378,25 +434,36 @@
         }
 
         function renderFplTable() {
-            const tableBodyEl = document.getElementById('fpl-players-table-body');
             const nameFilter = fplNameFilterEl.value.toLowerCase();
             const posFilter = fplPosFilterEl.value;
             const teamFilter = fplTeamFilterEl.value;
             const statusFilter = fplStatusFilterEl.value;
+            const priceFilter = parseFloat(priceFilterEl.value);
+            const pointsFilter = parseInt(pointsFilterEl.value);
             
+            priceValueEl.textContent = `£${priceFilter}m`;
+            pointsValueEl.textContent = pointsFilter;
+
             let filteredData = allPlayersData.filter(p => {
                 if (draftedPlayers.has(p.id)) return false;
                 const nameMatch = p.web_name.toLowerCase().includes(nameFilter);
                 const posMatch = !posFilter || p.position === posFilter;
                 const teamMatch = !teamFilter || p.team_name === teamFilter;
                 const statusMatch = !statusFilter || p.status === statusFilter;
-                return nameMatch && posMatch && teamMatch && statusMatch;
+                const priceMatch = (p.now_cost / 10) <= priceFilter;
+                const pointsMatch = p.total_points >= pointsFilter;
+                return nameMatch && posMatch && teamMatch && statusMatch && priceMatch && pointsMatch;
             });
 
             sortData(filteredData, fplSortConfig);
 
             const statusMap = { 'a': '✅', 'd': '❓', 'i': '🚑', 'u': '❌', 'n': '❌' };
-            tableBodyEl.innerHTML = filteredData.map(p => `
+            document.getElementById('fpl-players-table-body').innerHTML = filteredData.map(p => {
+                const xgiPerf = parseFloat(p.xgi_performance);
+                const perfClass = xgiPerf < 0 ? 'positive-diff' : (xgiPerf > 0 ? 'negative-diff' : '');
+                const xgiPerfDisplay = (xgiPerf > 0 ? '+' : '') + xgiPerf.toFixed(2);
+
+                return `
                 <tr class="hover:bg-gray-50 transition-colors duration-200">
                     <td class="px-3 py-2">
                         <div class="flex items-center">
@@ -408,18 +475,17 @@
                         </div>
                     </td>
                     <td class="px-3 py-2 tooltip"><div class="flex items-center"><span class="font-semibold w-10">${(p.player_rank || 0).toFixed(1)}</span><div class="w-full rank-bar-container ml-2"><div class="rank-bar" style="width: ${p.player_rank || 0}%"></div></div></div><div class="tooltiptext">${generateRankTooltip(p)}</div></td>
-                    <td class="px-2 py-2 text-sm text-center font-semibold">£${(p.now_cost / 10).toFixed(1)}m</td>
                     <td class="px-2 py-2 text-sm text-center font-bold">${p.total_points || 0}</td>
-                    <td class="px-2 py-2 text-sm text-center font-bold">${p.points_per_game || 0}</td>
+                    <td class="px-2 py-2 text-sm text-center">${p.selected_by_percent}%</td>
+                    <td class="px-2 py-2 text-sm text-center font-semibold">£${(p.now_cost / 10).toFixed(1)}m</td>
+                    <td class="px-2 py-2 text-sm text-center text-gray-600">${parseFloat(p.expected_goal_involvements || 0).toFixed(2)}</td>
+                    <td class="px-2 py-2 text-sm text-center ${perfClass}">${xgiPerfDisplay}</td>
                     <td class="px-2 py-2 text-sm text-center text-gray-600">${p.goals_scored || 0}</td>
                     <td class="px-2 py-2 text-sm text-center text-gray-600">${p.assists || 0}</td>
-                    <td class="px-2 py-2 text-sm text-center text-gray-600">${parseFloat(p.expected_goals || 0).toFixed(2)}</td>
-                    <td class="px-2 py-2 text-sm text-center text-gray-600">${parseFloat(p.expected_assists || 0).toFixed(2)}</td>
-                    <td class="px-2 py-2 text-sm text-center text-gray-600">${parseFloat(p.expected_goal_involvements || 0).toFixed(2)}</td>
-                    <td class="px-2 py-2 text-sm text-center text-gray-600">${parseFloat(p.expected_goals_conceded || 0).toFixed(2)}</td>
+                    <td class="px-2 py-2 text-sm text-center">${p.ict_index}</td>
                     <td class="px-2 py-2 text-sm text-center text-2xl" title="${p.news || 'אין חדשות'}">${statusMap[p.status] || '❓'}</td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function renderSquad() {
@@ -482,7 +548,7 @@
         function closeModal() { modalEl.classList.add('hidden'); }
 
         function saveAndRender() {
-            localStorage.setItem('fplDraftKit_v13', JSON.stringify(Array.from(draftedPlayers.keys())));
+            localStorage.setItem('fplDraftKit_v17', JSON.stringify(Array.from(draftedPlayers.keys())));
             renderFplTable();
             renderSquad();
         }
@@ -498,16 +564,25 @@
             }, 3000);
         }
 
-        // Main initialization function
         function startApp(data) {
             const teamsMap = new Map(data.teams.map(t => [t.id, t.name]));
             const posMap = new Map(data.element_types.map(p => [p.id, p.singular_name_short]));
             
-            allPlayersData = data.elements.map(p => ({ 
-                ...p, 
-                team_name: teamsMap.get(p.team), 
-                position: posMap.get(p.element_type) 
-            }));
+            allPlayersData = data.elements.map(p => {
+                const xgi = parseFloat(p.expected_goal_involvements) || 0;
+                const actual_gi = (p.goals_scored || 0) + (p.assists || 0);
+                const xgc = parseFloat(p.expected_goals_conceded) || 0;
+                const actual_gc = p.goals_conceded || 0;
+
+                return { 
+                    ...p, 
+                    team_name: teamsMap.get(p.team), 
+                    position: posMap.get(p.element_type),
+                    xgi_performance: (xgi - actual_gi),
+                    xGc_performance: (xgc - actual_gc),
+                    actual_goal_involvements: actual_gi
+                }
+            });
 
             calculateRanks();
             setupFilters();
@@ -516,10 +591,11 @@
             loader.classList.add('hidden');
             app.classList.remove('hidden');
             
-            // --- Event Listeners ---
-            [fplNameFilterEl, fplPosFilterEl, fplTeamFilterEl, fplStatusFilterEl].forEach(el => {
+            const allFilters = [fplNameFilterEl, fplPosFilterEl, fplTeamFilterEl, fplStatusFilterEl, priceFilterEl, pointsFilterEl];
+            allFilters.forEach(el => {
                 el.addEventListener('input', renderFplTable);
             });
+
             document.querySelector('#fpl-players-table thead').addEventListener('click', (e) => {
                 const th = e.target.closest('th');
                 if (!th || !th.dataset.sortFpl) return;
@@ -546,7 +622,6 @@
             });
         }
 
-        // Setup the initial file listener
         fileInput.addEventListener('change', loadDataFromFile);
     });
     </script>
