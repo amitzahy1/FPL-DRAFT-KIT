@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPL Draft Kit - V17.1</title>
+    <title>FPL Draft Kit - V4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,10 +111,10 @@
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
         .tooltip-title {
             font-weight: 700;
-            color: #a5f3fc; /* cyan-200 */
+            color: #a5f3fc;
             margin-bottom: 8px;
             padding-bottom: 4px;
-            border-bottom: 1px solid #374151; /* gray-700 */
+            border-bottom: 1px solid #374151;
         }
         .top-metrics-grid {
             display: grid;
@@ -125,18 +125,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #374151; /* gray-700 */
+            background-color: #374151;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 0.8rem;
         }
-        .metric-name {
-            color: #d1d5db; /* gray-300 */
-        }
-        .metric-weight {
-            font-weight: 600;
-            color: #34d399; /* emerald-400 */
-        }
+        .metric-name { color: #d1d5db; }
+        .metric-weight { font-weight: 600; color: #34d399; }
         .positive-diff { color: #22c55e; font-weight: bold; }
         .negative-diff { color: #ef4444; font-weight: bold; }
     </style>
@@ -145,28 +140,46 @@
 
     <!-- File Uploader Screen -->
     <div id="upload-container" class="min-h-screen flex flex-col justify-center items-center text-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+        <div class="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">FPL Draft Kit</h1>
-            <p class="text-gray-600 mb-6">כדי להתחיל, אנא העלה את קובץ ה-JSON עם נתוני השחקנים.</p>
-            <label for="json-file-input" class="w-full inline-block bg-blue-500 text-white font-bold py-3 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition">
-                בחר קובץ JSON
-            </label>
-            <input type="file" id="json-file-input" class="hidden" accept=".json,application/json">
-            <p id="file-name" class="mt-4 text-sm text-gray-500"></p>
+            <p class="text-gray-600 mb-8">כדי להתחיל, אנא העלה את שני קבצי הנתונים.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- FPL Data Upload -->
+                <div class="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2">1. נתוני פרמייר ליג</h2>
+                    <label for="fpl-file-input" class="w-full inline-block bg-blue-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition">
+                        בחר קובץ FPL
+                    </label>
+                    <input type="file" id="fpl-file-input" class="hidden" accept=".json,application/json">
+                    <p id="fpl-file-name" class="mt-3 text-sm text-gray-500 h-5"></p>
+                </div>
+                <!-- Championship Data Upload -->
+                <div class="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2">2. נתוני צ'מפיונשיפ</h2>
+                    <label for="champ-file-input" class="w-full inline-block bg-green-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer hover:bg-green-600 transition">
+                        בחר קובץ צ'מפיונשיפ
+                    </label>
+                    <input type="file" id="champ-file-input" class="hidden" accept=".json,application/json">
+                    <p id="champ-file-name" class="mt-3 text-sm text-gray-500 h-5"></p>
+                </div>
+            </div>
+            <button id="start-analysis-btn" class="mt-8 w-full bg-gray-400 text-white font-bold py-3 px-4 rounded-lg cursor-not-allowed" disabled>
+                התחל ניתוח
+            </button>
         </div>
     </div>
 
     <!-- Loader Screen -->
     <div id="loader-container" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex flex-col justify-center items-center z-50">
         <div class="loader"></div>
-        <p id="loader-text" class="mt-4 text-lg text-white">מעבד את הקובץ...</p>
+        <p id="loader-text" class="mt-4 text-lg text-white">מעבד נתונים...</p>
     </div>
 
     <!-- Main Application (initially hidden) -->
     <div id="app" class="container mx-auto p-4 hidden">
         <header class="text-center mb-6">
             <h1 class="text-4xl font-bold text-gray-900">FPL Draft Kit</h1>
-            <p class="text-lg text-gray-600 mt-2">כלי הדראפט האולטימטיבי, מבוסס נתוני FPL</p>
+            <p class="text-lg text-gray-600 mt-2">כלי הדראפט האולטימטיבי, מבוסס נתוני FPL וצ'מפיונשיפ</p>
         </header>
         
         <div id="alert-box" class="fixed top-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform -translate-y-12 z-50">
@@ -186,24 +199,22 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div class="lg:col-span-3 space-y-8">
+                <!-- FPL Table Section -->
                 <div>
-                    <h2 class="text-2xl font-bold mb-2">מאגר שחקני FPL</h2>
+                    <h2 class="text-2xl font-bold mb-2">מאגר שחקני פרמייר ליג</h2>
                     <div class="bg-white p-4 rounded-lg shadow-md mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Standard Filters -->
-                        <input type="text" id="fpl-name-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="חיפוש שם שחקן...">
-                        <select id="fpl-position-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
-                        <select id="fpl-team-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
-                        <select id="fpl-status-filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
-                        
-                        <!-- New Range Filters -->
+                        <input type="text" id="fpl-name-filter" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="חיפוש שם שחקן...">
+                        <select id="fpl-position-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                        <select id="fpl-team-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                        <select id="fpl-status-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
                         <div class="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="price-filter" class="block text-sm font-medium text-gray-700">מחיר מקסימלי: <span id="price-value" class="font-bold"></span></label>
-                                <input type="range" id="price-filter" min="3.5" max="14.0" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <label for="fpl-price-filter" class="block text-sm font-medium text-gray-700">מחיר מקסימלי: <span id="fpl-price-value" class="font-bold"></span></label>
+                                <input type="range" id="fpl-price-filter" min="3.5" max="14.0" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                             </div>
                             <div>
-                                <label for="points-filter" class="block text-sm font-medium text-gray-700">מינימום נקודות: <span id="points-value" class="font-bold"></span></label>
-                                <input type="range" id="points-filter" min="0" max="300" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <label for="fpl-points-filter" class="block text-sm font-medium text-gray-700">מינימום נקודות: <span id="fpl-points-value" class="font-bold"></span></label>
+                                <input type="range" id="fpl-points-filter" min="0" max="300" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                             </div>
                         </div>
                     </div>
@@ -211,20 +222,61 @@
                         <table id="fpl-players-table" class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="web_name">שחקן</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="player_rank">FPL Rank</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="total_points">נקודות</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="selected_by_percent">אחוז בעלות</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="now_cost">מחיר</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="expected_goal_involvements">xGi</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="xgi_performance">xGi Perf</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="goals_scored">שערים</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="assists">בישולים</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="ict_index">ICT</th>
-                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort-fpl="status">סטטוס</th>
+                                    <th data-sort-fpl="web_name">שחקן</th>
+                                    <th data-sort-fpl="player_rank">FPL Rank</th>
+                                    <th data-sort-fpl="total_points">נקודות</th>
+                                    <th data-sort-fpl="selected_by_percent">אחוז בעלות</th>
+                                    <th data-sort-fpl="now_cost">מחיר</th>
+                                    <th data-sort-fpl="expected_goal_involvements">xGi</th>
+                                    <th data-sort-fpl="xgi_performance">xGi Perf</th>
+                                    <th data-sort-fpl="goals_scored">שערים</th>
+                                    <th data-sort-fpl="assists">בישולים</th>
+                                    <th data-sort-fpl="ict_index">ICT</th>
+                                    <th data-sort-fpl="status">סטטוס</th>
                                 </tr>
                             </thead>
                             <tbody id="fpl-players-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Championship Table Section -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">מאגר שחקני צ'מפיונשיפ</h2>
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <input type="text" id="champ-name-filter" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="חיפוש שם שחקן...">
+                        <select id="champ-position-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                        <select id="champ-team-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                        <select id="champ-status-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                         <div class="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="champ-price-filter" class="block text-sm font-medium text-gray-700">מחיר מקסימלי: <span id="champ-price-value" class="font-bold"></span></label>
+                                <input type="range" id="champ-price-filter" min="3.5" max="14.0" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="champ-points-filter" class="block text-sm font-medium text-gray-700">מינימום נקודות: <span id="champ-points-value" class="font-bold"></span></label>
+                                <input type="range" id="champ-points-filter" min="0" max="300" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow max-h-[70vh]">
+                        <table id="champ-players-table" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                     <th data-sort-champ="web_name">שחקן</th>
+                                    <th data-sort-champ="player_rank">FPL Rank</th>
+                                    <th data-sort-champ="total_points">נקודות</th>
+                                    <th data-sort-champ="selected_by_percent">אחוז בעלות</th>
+                                    <th data-sort-champ="now_cost">מחיר</th>
+                                    <th data-sort-champ="expected_goal_involvements">xGi</th>
+                                    <th data-sort-champ="xgi_performance">xGi Perf</th>
+                                    <th data-sort-champ="goals_scored">שערים</th>
+                                    <th data-sort-champ="assists">בישולים</th>
+                                    <th data-sort-champ="ict_index">ICT</th>
+                                    <th data-sort-champ="status">סטטוס</th>
+                                </tr>
+                            </thead>
+                            <tbody id="champ-players-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
                 </div>
@@ -269,12 +321,18 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         
-        let allPlayersData = [];
+        let allPlayersData = [], fplPlayersData = [], champPlayersData = [];
+        let fplData = null, champData = null;
+
         const uploadContainer = document.getElementById('upload-container');
         const loader = document.getElementById('loader-container');
         const app = document.getElementById('app');
-        const fileInput = document.getElementById('json-file-input');
-        const fileNameEl = document.getElementById('file-name');
+        
+        const fplFileInput = document.getElementById('fpl-file-input');
+        const fplFileNameEl = document.getElementById('fpl-file-name');
+        const champFileInput = document.getElementById('champ-file-input');
+        const champFileNameEl = document.getElementById('champ-file-name');
+        const startAnalysisBtn = document.getElementById('start-analysis-btn');
 
         const rankingWeights = {
             GKP: { xGc_performance: 10, points_per_game: 8, clean_sheets: 6, penalties_saved: 5, saves: 4 },
@@ -283,42 +341,85 @@
             FWD: { points_per_game: 10, expected_goal_involvements: 9, xgi_performance: 7, threat: 6, actual_goal_involvements: 5, ict_index: 4 }
         };
 
-        function loadDataFromFile(event) {
+        function readFileAsJson(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try { resolve(JSON.parse(e.target.result)); } 
+                    catch (error) { reject(new Error(`שגיאה בפענוח הקובץ: ${file.name}`)); }
+                };
+                reader.onerror = () => reject(new Error(`שגיאה בקריאת הקובץ: ${file.name}`));
+                reader.readAsText(file);
+            });
+        }
+
+        function checkCanStart() {
+            if (fplData && champData) {
+                startAnalysisBtn.disabled = false;
+                startAnalysisBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                startAnalysisBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }
+        }
+
+        fplFileInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.type !== "application/json") {
-                alert("אנא בחר קובץ JSON בלבד.");
-                return;
+            fplFileNameEl.textContent = 'טוען...';
+            try {
+                const data = await readFileAsJson(file);
+                if (!data.elements || !data.teams) throw new Error("פורמט FPL לא תקין");
+                fplData = data;
+                fplFileNameEl.textContent = `✔️ ${file.name}`;
+                checkCanStart();
+            } catch (error) {
+                alert(error.message);
+                fplFileNameEl.textContent = '';
+                fplData = null;
             }
+        });
 
-            fileNameEl.textContent = `טוען את: ${file.name}`;
+        champFileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            champFileNameEl.textContent = 'טוען...';
+            try {
+                const data = await readFileAsJson(file);
+                if (!data.elements || !data.teams) throw new Error("פורמט צ'מפיונשיפ לא תקין");
+                champData = data;
+                champFileNameEl.textContent = `✔️ ${file.name}`;
+                checkCanStart();
+            } catch (error) {
+                alert(error.message);
+                champFileNameEl.textContent = '';
+                champData = null;
+            }
+        });
+
+        startAnalysisBtn.addEventListener('click', () => {
             uploadContainer.classList.add('hidden');
             loader.classList.remove('hidden');
+            setTimeout(() => startApp(fplData, champData), 500);
+        });
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (!data.elements || !data.teams || !data.element_types) {
-                        throw new Error("קובץ ה-JSON אינו בפורמט FPL הנדרש.");
-                    }
-                    startApp(data);
-                } catch (error) {
-                    console.error("Error parsing JSON file:", error);
-                    alert(`שגיאה בפענוח הקובץ: ${error.message}`);
-                    uploadContainer.classList.remove('hidden');
-                    loader.classList.add('hidden');
-                    fileNameEl.textContent = '';
+        function processPlayerData(data) {
+            const teamsMap = new Map(data.teams.map(t => [t.id, t.name]));
+            const posMap = new Map(data.element_types.map(p => [p.id, p.singular_name_short]));
+            
+            return data.elements.map(p => {
+                const xgi = parseFloat(p.expected_goal_involvements) || 0;
+                const actual_gi = (p.goals_scored || 0) + (p.assists || 0);
+                const xgc = parseFloat(p.expected_goals_conceded) || 0;
+                const actual_gc = p.goals_conceded || 0;
+
+                return { 
+                    ...p, 
+                    team_name: teamsMap.get(p.team), 
+                    position: posMap.get(p.element_type),
+                    xgi_performance: (xgi - actual_gi),
+                    xGc_performance: (xgc - actual_gc),
+                    actual_goal_involvements: actual_gi
                 }
-            };
-            reader.onerror = () => {
-                console.error("Error reading file");
-                alert("אירעה שגיאה בקריאת הקובץ.");
-                uploadContainer.classList.remove('hidden');
-                loader.classList.add('hidden');
-                fileNameEl.textContent = '';
-            };
-            reader.readAsText(file);
+            });
         }
 
         function scaleValues(data, key) {
@@ -330,16 +431,16 @@
             return data.map(p => isNaN(parseFloat(p[key])) ? 0 : (parseFloat(p[key]) - min) / (max - min));
         }
 
-        function calculateRanks() {
+        function calculateRanks(players) {
             const metricsToNormalize = new Set();
             Object.values(rankingWeights).forEach(posWeights => Object.keys(posWeights).forEach(metric => metricsToNormalize.add(metric)));
             
             const normalized = {};
             metricsToNormalize.forEach(metric => {
-                normalized[metric] = scaleValues(allPlayersData, metric);
+                normalized[metric] = scaleValues(players, metric);
             });
 
-            allPlayersData.forEach((player, index) => {
+            players.forEach((player, index) => {
                 let totalWeight = 0;
                 let weightedScore = 0;
                 const weights = rankingWeights[player.position];
@@ -364,9 +465,7 @@
         
         function generateRankTooltip(player) {
             if (!player.rank_breakdown) return '';
-            
             const topMetrics = player.rank_breakdown.slice(0, 3);
-
             let metricsHtml = topMetrics.map(item => {
                 let metricName = item.metric.replace(/_/g, ' ');
                 return `<div class="metric-item">
@@ -374,57 +473,44 @@
                           <span class="metric-weight">משקל: ${item.weight}</span>
                         </div>`;
             }).join('');
-
-            return `<div class="tooltip-title">מדדים מובילים לדירוג</div>
-                    <div class="top-metrics-grid">${metricsHtml}</div>`;
+            return `<div class="tooltip-title">מדדים מובילים לדירוג</div><div class="top-metrics-grid">${metricsHtml}</div>`;
         }
 
-        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v17')));
+        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v4')));
         let fplSortConfig = { key: 'player_rank', direction: 'desc' };
+        let champSortConfig = { key: 'player_rank', direction: 'desc' };
         const SQUAD_LIMITS = { TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3 };
-
-        const fplNameFilterEl = document.getElementById('fpl-name-filter');
-        const fplPosFilterEl = document.getElementById('fpl-position-filter');
-        const fplTeamFilterEl = document.getElementById('fpl-team-filter');
-        const fplStatusFilterEl = document.getElementById('fpl-status-filter');
-        const priceFilterEl = document.getElementById('price-filter');
-        const priceValueEl = document.getElementById('price-value');
-        const pointsFilterEl = document.getElementById('points-filter');
-        const pointsValueEl = document.getElementById('points-value');
         const modalEl = document.getElementById('confirm-modal');
 
-        function setupFilters() {
+        function setupFilters(dataSet, prefix) {
             const playerPositions = ['GKP', 'DEF', 'MID', 'FWD'];
-            const fplPositions = [...new Set(allPlayersData.map(p => p.position))]
-                .filter(p => playerPositions.includes(p))
-                .sort();
-            const fplTeams = [...new Set(allPlayersData.map(p => p.team_name))].filter(Boolean).sort();
-            fplPosFilterEl.innerHTML = '<option value="">כל העמדות</option>' + fplPositions.map(p => `<option value="${p}">${p}</option>`).join('');
-            fplTeamFilterEl.innerHTML = '<option value="">כל הקבוצות</option>' + fplTeams.map(t => `<option value="${t}">${t}</option>`).join('');
-            fplStatusFilterEl.innerHTML = `
-                <option value="">כל הסטטוסים</option>
-                <option value="a">זמינים</option>
-                <option value="d">בספק</option>
-                <option value="i">פצועים</option>
-                <option value="u">לא זמינים</option>
-             `;
+            const positions = [...new Set(dataSet.map(p => p.position))].filter(p => playerPositions.includes(p)).sort();
+            const teams = [...new Set(dataSet.map(p => p.team_name))].filter(Boolean).sort();
             
-            priceFilterEl.value = priceFilterEl.max;
-            priceValueEl.textContent = `£${priceFilterEl.value}m`;
-            pointsFilterEl.value = pointsFilterEl.min;
-            pointsValueEl.textContent = pointsFilterEl.value;
+            const posEl = document.getElementById(`${prefix}-position-filter`);
+            const teamEl = document.getElementById(`${prefix}-team-filter`);
+            const statusEl = document.getElementById(`${prefix}-status-filter`);
+            const priceEl = document.getElementById(`${prefix}-price-filter`);
+            const priceValEl = document.getElementById(`${prefix}-price-value`);
+            const pointsEl = document.getElementById(`${prefix}-points-filter`);
+            const pointsValEl = document.getElementById(`${prefix}-points-value`);
+
+            posEl.innerHTML = '<option value="">כל העמדות</option>' + positions.map(p => `<option value="${p}">${p}</option>`).join('');
+            teamEl.innerHTML = '<option value="">כל הקבוצות</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
+            statusEl.innerHTML = `<option value="">כל הסטטוסים</option><option value="a">זמינים</option><option value="d">בספק</option><option value="i">פצועים</option><option value="u">לא זמינים</option>`;
+            
+            priceEl.value = priceEl.max;
+            priceValEl.textContent = `£${priceEl.value}m`;
+            pointsEl.value = pointsEl.min;
+            pointsValEl.textContent = pointsEl.value;
         }
         
         function sortData(data, config) {
             data.sort((a, b) => {
-                let valA = a[config.key];
-                let valB = b[config.key];
+                let valA = a[config.key], valB = b[config.key];
                 if (typeof valA === 'string') {
-                    const numA = parseFloat(valA);
-                    const numB = parseFloat(valB);
-                    if (!isNaN(numA) && !isNaN(numB)) {
-                        return config.direction === 'asc' ? numA - numB : numB - numA;
-                    }
+                    const numA = parseFloat(valA), numB = parseFloat(valB);
+                    if (!isNaN(numA) && !isNaN(numB)) return config.direction === 'asc' ? numA - numB : numB - numA;
                     return config.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 }
                 if (valA === null || valA === undefined) valA = -Infinity;
@@ -433,47 +519,38 @@
             });
         }
 
-        function renderFplTable() {
-            const nameFilter = fplNameFilterEl.value.toLowerCase();
-            const posFilter = fplPosFilterEl.value;
-            const teamFilter = fplTeamFilterEl.value;
-            const statusFilter = fplStatusFilterEl.value;
-            const priceFilter = parseFloat(priceFilterEl.value);
-            const pointsFilter = parseInt(pointsFilterEl.value);
+        function renderTable(dataSet, prefix, sortConfig) {
+            const nameFilter = document.getElementById(`${prefix}-name-filter`).value.toLowerCase();
+            const posFilter = document.getElementById(`${prefix}-position-filter`).value;
+            const teamFilter = document.getElementById(`${prefix}-team-filter`).value;
+            const statusFilter = document.getElementById(`${prefix}-status-filter`).value;
+            const priceFilter = parseFloat(document.getElementById(`${prefix}-price-filter`).value);
+            const pointsFilter = parseInt(document.getElementById(`${prefix}-points-filter`).value);
             
-            priceValueEl.textContent = `£${priceFilter}m`;
-            pointsValueEl.textContent = pointsFilter;
+            document.getElementById(`${prefix}-price-value`).textContent = `£${priceFilter}m`;
+            document.getElementById(`${prefix}-points-value`).textContent = pointsFilter;
 
-            let filteredData = allPlayersData.filter(p => {
+            let filteredData = dataSet.filter(p => {
                 if (draftedPlayers.has(p.id)) return false;
-                const nameMatch = p.web_name.toLowerCase().includes(nameFilter);
-                const posMatch = !posFilter || p.position === posFilter;
-                const teamMatch = !teamFilter || p.team_name === teamFilter;
-                const statusMatch = !statusFilter || p.status === statusFilter;
-                const priceMatch = (p.now_cost / 10) <= priceFilter;
-                const pointsMatch = p.total_points >= pointsFilter;
-                return nameMatch && posMatch && teamMatch && statusMatch && priceMatch && pointsMatch;
+                return p.web_name.toLowerCase().includes(nameFilter) &&
+                       (!posFilter || p.position === posFilter) &&
+                       (!teamFilter || p.team_name === teamFilter) &&
+                       (!statusFilter || p.status === statusFilter) &&
+                       (p.now_cost / 10) <= priceFilter &&
+                       p.total_points >= pointsFilter;
             });
 
-            sortData(filteredData, fplSortConfig);
+            sortData(filteredData, sortConfig);
 
             const statusMap = { 'a': '✅', 'd': '❓', 'i': '🚑', 'u': '❌', 'n': '❌' };
-            document.getElementById('fpl-players-table-body').innerHTML = filteredData.map(p => {
+            const tableBodyHTML = filteredData.map(p => {
                 const xgiPerf = parseFloat(p.xgi_performance);
                 const perfClass = xgiPerf < 0 ? 'positive-diff' : (xgiPerf > 0 ? 'negative-diff' : '');
                 const xgiPerfDisplay = (xgiPerf > 0 ? '+' : '') + xgiPerf.toFixed(2);
 
                 return `
                 <tr class="hover:bg-gray-50 transition-colors duration-200">
-                    <td class="px-3 py-2">
-                        <div class="flex items-center">
-                            <button class="draft-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 rounded-md transition ml-3 text-sm" data-id="${p.id}">בחר</button>
-                            <div>
-                                <div class="font-bold">${p.web_name}</div>
-                                <div class="text-xs text-gray-500">${p.team_name} - ${p.position}</div>
-                            </div>
-                        </div>
-                    </td>
+                    <td class="px-3 py-2"><div class="flex items-center"><button class="draft-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 rounded-md transition ml-3 text-sm" data-id="${p.id}">בחר</button><div><div class="font-bold">${p.web_name}</div><div class="text-xs text-gray-500">${p.team_name} - ${p.position}</div></div></div></td>
                     <td class="px-3 py-2 tooltip"><div class="flex items-center"><span class="font-semibold w-10">${(p.player_rank || 0).toFixed(1)}</span><div class="w-full rank-bar-container ml-2"><div class="rank-bar" style="width: ${p.player_rank || 0}%"></div></div></div><div class="tooltiptext">${generateRankTooltip(p)}</div></td>
                     <td class="px-2 py-2 text-sm text-center font-bold">${p.total_points || 0}</td>
                     <td class="px-2 py-2 text-sm text-center">${p.selected_by_percent}%</td>
@@ -484,8 +561,14 @@
                     <td class="px-2 py-2 text-sm text-center text-gray-600">${p.assists || 0}</td>
                     <td class="px-2 py-2 text-sm text-center">${p.ict_index}</td>
                     <td class="px-2 py-2 text-sm text-center text-2xl" title="${p.news || 'אין חדשות'}">${statusMap[p.status] || '❓'}</td>
-                </tr>
-            `}).join('');
+                </tr>`;
+            }).join('');
+            document.getElementById(`${prefix}-players-table-body`).innerHTML = tableBodyHTML;
+        }
+
+        function renderAllTables() {
+            renderTable(fplPlayersData, 'fpl', fplSortConfig);
+            renderTable(champPlayersData, 'champ', champSortConfig);
         }
 
         function renderSquad() {
@@ -514,7 +597,7 @@
         }
 
         function createPlayerShirt(player) {
-            const teamColors = {'Man City':'bg-sky-300','Liverpool':'bg-red-500 text-white','Arsenal':'bg-red-600 text-white','Newcastle':'bg-gray-800 text-white','Aston Villa':'bg-purple-900 text-yellow-300','Man Utd':'bg-red-600 text-white','Brighton':'bg-blue-500 text-white','Brentford':'bg-red-500 text-white','Tottenham':'bg-gray-100 text-blue-900','Spurs':'bg-gray-100 text-blue-900','Chelsea':'bg-blue-700 text-white','West Ham':'bg-purple-800 text-sky-300','Everton':'bg-blue-800 text-white', 'Leicester': 'bg-blue-600 text-white', 'Ipswich': 'bg-blue-700 text-white', 'Southampton': 'bg-red-600 text-white', 'Nott\'m Forest': 'bg-red-600 text-white', 'Fulham': 'bg-gray-100 text-black border border-gray-400', 'Wolves': 'bg-yellow-500 text-black', 'Crystal Palace': 'bg-blue-700 text-red-600', 'Bournemouth': 'bg-red-600 text-black'};
+            const teamColors = {'Man City':'bg-sky-300','Liverpool':'bg-red-500 text-white','Arsenal':'bg-red-600 text-white','Newcastle':'bg-gray-800 text-white','Aston Villa':'bg-purple-900 text-yellow-300','Man Utd':'bg-red-600 text-white','Brighton':'bg-blue-500 text-white','Brentford':'bg-red-500 text-white','Tottenham':'bg-gray-100 text-blue-900','Spurs':'bg-gray-100 text-blue-900','Chelsea':'bg-blue-700 text-white','West Ham':'bg-purple-800 text-sky-300','Everton':'bg-blue-800 text-white', 'Leicester': 'bg-blue-600 text-white', 'Ipswich': 'bg-blue-700 text-white', 'Southampton': 'bg-red-600 text-white', 'Nott\'m Forest': 'bg-red-600 text-white', 'Fulham': 'bg-gray-100 text-black border border-gray-400', 'Wolves': 'bg-yellow-500 text-black', 'Crystal Palace': 'bg-blue-700 text-red-600', 'Bournemouth': 'bg-red-600 text-black', 'Leeds United': 'bg-yellow-300 text-blue-800', 'Burnley': 'bg-red-800 text-sky-300', 'Sunderland': 'bg-red-600 text-white'};
             const colorClass = teamColors[player.team_name] || 'bg-gray-200';
             return `<div class="player-shirt ${colorClass} undraft-btn" data-id="${player.id}" title="לחץ להסרה"><div class="font-bold text-sm truncate">${player.web_name}</div><div class="text-xs">£${(player.now_cost / 10).toFixed(1)}m</div></div>`;
         }
@@ -548,8 +631,8 @@
         function closeModal() { modalEl.classList.add('hidden'); }
 
         function saveAndRender() {
-            localStorage.setItem('fplDraftKit_v17', JSON.stringify(Array.from(draftedPlayers.keys())));
-            renderFplTable();
+            localStorage.setItem('fplDraftKit_v4', JSON.stringify(Array.from(draftedPlayers.keys())));
+            renderAllTables();
             renderSquad();
         }
         
@@ -564,50 +647,45 @@
             }, 3000);
         }
 
-        function startApp(data) {
-            const teamsMap = new Map(data.teams.map(t => [t.id, t.name]));
-            const posMap = new Map(data.element_types.map(p => [p.id, p.singular_name_short]));
+        function startApp(fplRawData, champRawData) {
+            fplPlayersData = processPlayerData(fplRawData);
+            champPlayersData = processPlayerData(champRawData);
+            allPlayersData = [...fplPlayersData, ...champPlayersData];
+
+            calculateRanks(allPlayersData); 
             
-            allPlayersData = data.elements.map(p => {
-                const xgi = parseFloat(p.expected_goal_involvements) || 0;
-                const actual_gi = (p.goals_scored || 0) + (p.assists || 0);
-                const xgc = parseFloat(p.expected_goals_conceded) || 0;
-                const actual_gc = p.goals_conceded || 0;
-
-                return { 
-                    ...p, 
-                    team_name: teamsMap.get(p.team), 
-                    position: posMap.get(p.element_type),
-                    xgi_performance: (xgi - actual_gi),
-                    xGc_performance: (xgc - actual_gc),
-                    actual_goal_involvements: actual_gi
-                }
-            });
-
-            calculateRanks();
-            setupFilters();
+            setupFilters(fplPlayersData, 'fpl');
+            setupFilters(champPlayersData, 'champ');
+            
             saveAndRender();
             
             loader.classList.add('hidden');
             app.classList.remove('hidden');
             
-            const allFilters = [fplNameFilterEl, fplPosFilterEl, fplTeamFilterEl, fplStatusFilterEl, priceFilterEl, pointsFilterEl];
-            allFilters.forEach(el => {
-                el.addEventListener('input', renderFplTable);
+            // Event Listeners
+            ['fpl', 'champ'].forEach(prefix => {
+                document.querySelectorAll(`#${prefix}-name-filter, #${prefix}-position-filter, #${prefix}-team-filter, #${prefix}-status-filter, #${prefix}-price-filter, #${prefix}-points-filter`).forEach(el => {
+                    el.addEventListener('input', () => renderTable(prefix === 'fpl' ? fplPlayersData : champPlayersData, prefix, prefix === 'fpl' ? fplSortConfig : champSortConfig));
+                });
+
+                document.querySelector(`#${prefix}-players-table thead`).addEventListener('click', (e) => {
+                    const th = e.target.closest('th');
+                    if (!th) return;
+                    const key = th.dataset.sortFpl || th.dataset.sortChamp;
+                    if (!key) return;
+
+                    const sortConfig = prefix === 'fpl' ? fplSortConfig : champSortConfig;
+                    sortConfig.direction = (sortConfig.key === key && sortConfig.direction === 'desc') ? 'asc' : 'desc';
+                    sortConfig.key = key;
+                    renderTable(prefix === 'fpl' ? fplPlayersData : champPlayersData, prefix, sortConfig);
+                });
+
+                document.getElementById(`${prefix}-players-table-body`).addEventListener('click', e => {
+                    const btn = e.target.closest('.draft-btn');
+                    if (btn) handleDraft(parseInt(btn.dataset.id));
+                });
             });
 
-            document.querySelector('#fpl-players-table thead').addEventListener('click', (e) => {
-                const th = e.target.closest('th');
-                if (!th || !th.dataset.sortFpl) return;
-                const key = th.dataset.sortFpl;
-                fplSortConfig.direction = (fplSortConfig.key === key && fplSortConfig.direction === 'desc') ? 'asc' : 'desc';
-                fplSortConfig.key = key;
-                renderFplTable();
-            });
-            document.getElementById('fpl-players-table-body').addEventListener('click', e => {
-                const btn = e.target.closest('.draft-btn');
-                if (btn) handleDraft(parseInt(btn.dataset.id));
-            });
             document.getElementById('reset-squad-btn').addEventListener('click', handleReset);
             document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
             document.getElementById('modal-confirm-btn').addEventListener('click', confirmReset);
@@ -621,8 +699,6 @@
                 if (shirt) handleUndraft(parseInt(shirt.dataset.id));
             });
         }
-
-        fileInput.addEventListener('change', loadDataFromFile);
     });
     </script>
 </body>
