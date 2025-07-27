@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPL Draft Kit - V8</title>
+    <title>FPL Draft Kit - V9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,15 +163,12 @@
     <div id="upload-container" class="min-h-screen flex flex-col justify-center items-center text-center p-4">
         <div class="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">FPL Draft Kit</h1>
-            <p class="text-gray-600 mb-8">כדי להתחיל, אנא העלה את שני קבצי הנתונים.</p>
+            <p class="text-gray-600 mb-8">טוען נתונים עדכניים... אנא המתן.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
                     <h2 class="text-lg font-semibold text-gray-700 mb-2">1. נתוני פרמייר ליג</h2>
-                    <label for="fpl-file-input" class="w-full inline-block bg-blue-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-600 transition">
-                        בחר קובץ FPL
-                    </label>
-                    <input type="file" id="fpl-file-input" class="hidden" accept=".json,application/json">
-                    <p id="fpl-file-name" class="mt-3 text-sm text-gray-500 h-5"></p>
+                    <div id="fpl-status-loader" class="loader my-2"></div>
+                    <p id="fpl-status-text" class="mt-3 text-sm text-gray-500 h-5">טוען נתונים חיים...</p>
                 </div>
                 <div class="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
                     <h2 class="text-lg font-semibold text-gray-700 mb-2">2. נתוני צ'מפיונשיפ</h2>
@@ -313,8 +310,8 @@
         const loader = document.getElementById('loader-container');
         const app = document.getElementById('app');
         
-        const fplFileInput = document.getElementById('fpl-file-input');
-        const fplFileNameEl = document.getElementById('fpl-file-name');
+        const fplStatusLoader = document.getElementById('fpl-status-loader');
+        const fplStatusText = document.getElementById('fpl-status-text');
         const champFileInput = document.getElementById('champ-file-input');
         const champFileNameEl = document.getElementById('champ-file-name');
         const startAnalysisBtn = document.getElementById('start-analysis-btn');
@@ -325,6 +322,24 @@
             MID: { total_points: 10, expected_goal_involvements: 9, xgi_performance: 6, ict_index: 5, threat: 5, actual_goal_involvements: 4 },
             FWD: { total_points: 10, expected_goal_involvements: 9, xgi_performance: 7, threat: 6, actual_goal_involvements: 5, ict_index: 4 }
         };
+
+        async function fetchFplData() {
+            const CORS_PROXY = `https://corsproxy.io/?`;
+            const FPL_API_URL = `${CORS_PROXY}${encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/')}`;
+            try {
+                const response = await fetch(FPL_API_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                fplData = data;
+                fplStatusLoader.style.display = 'none';
+                fplStatusText.textContent = '✔️ נתונים נטענו בהצלחה';
+                checkCanStart();
+            } catch (error) {
+                console.error("Could not fetch FPL data:", error);
+                fplStatusLoader.style.display = 'none';
+                fplStatusText.textContent = '❌ שגיאה בטעינת נתונים';
+            }
+        }
 
         function readFileAsJson(file) {
             return new Promise((resolve, reject) => {
@@ -346,23 +361,6 @@
             }
         }
 
-        fplFileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            fplFileNameEl.textContent = 'טוען...';
-            try {
-                const data = await readFileAsJson(file);
-                if (!data.elements || !data.teams) throw new Error("פורמט FPL לא תקין");
-                fplData = data;
-                fplFileNameEl.textContent = `✔️ ${file.name}`;
-                checkCanStart();
-            } catch (error) {
-                alert(error.message);
-                fplFileNameEl.textContent = '';
-                fplData = null;
-            }
-        });
-
         champFileInput.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -383,13 +381,7 @@
         startAnalysisBtn.addEventListener('click', () => {
             uploadContainer.classList.add('hidden');
             loader.classList.remove('hidden');
-            const mergedData = {
-                ...fplData,
-                elements: [...fplData.elements, ...champData.elements],
-                teams: [...fplData.teams, ...champData.teams],
-                element_types: fplData.element_types
-            };
-            setTimeout(() => startApp(mergedData), 500);
+            setTimeout(() => startApp(fplData, champData), 500);
         });
 
         function processPlayerData(data) {
@@ -475,8 +467,8 @@
             return `<div class="tooltip-title">מדדים מובילים לדירוג</div><div class="top-metrics-grid">${metricsHtml}</div>`;
         }
 
-        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v8_draft')));
-        let watchlistPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v8_watchlist')));
+        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v9_draft')));
+        let watchlistPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v9_watchlist')));
         let sortConfig = { key: 'player_rank', direction: 'desc' };
         const SQUAD_LIMITS = { TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3 };
         const modalEl = document.getElementById('confirm-modal');
@@ -672,8 +664,8 @@
         function closeModal() { modalEl.classList.add('hidden'); }
 
         function saveAndRender() {
-            localStorage.setItem('fplDraftKit_v8_draft', JSON.stringify(Array.from(draftedPlayers.keys())));
-            localStorage.setItem('fplDraftKit_v8_watchlist', JSON.stringify(Array.from(watchlistPlayers.keys())));
+            localStorage.setItem('fplDraftKit_v9_draft', JSON.stringify(Array.from(draftedPlayers.keys())));
+            localStorage.setItem('fplDraftKit_v9_watchlist', JSON.stringify(Array.from(watchlistPlayers.keys())));
             renderTable();
             renderSquad();
             renderWatchlist();
@@ -690,8 +682,8 @@
             }, 3000);
         }
 
-        function startApp(data) {
-            allPlayersData = processPlayerData(data);
+        function startApp(mergedData) {
+            allPlayersData = processPlayerData(mergedData);
             calculateRanks(allPlayersData); 
             setupFilters(allPlayersData);
             saveAndRender();
@@ -742,6 +734,9 @@
                 if (shirt) handleUndraft(parseInt(shirt.dataset.id));
             });
         }
+        
+        // Auto-start the FPL data fetch on page load
+        fetchFplData();
     });
     </script>
 </body>
