@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FPL Draft Kit - V9</title>
+    <title>FPL Draft Kit - V2 (Embedded Champ)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -159,36 +159,10 @@
 </head>
 <body>
 
-    <!-- File Uploader Screen -->
-    <div id="upload-container" class="min-h-screen flex flex-col justify-center items-center text-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">FPL Draft Kit</h1>
-            <p class="text-gray-600 mb-8">טוען נתונים עדכניים... אנא המתן.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-2">1. נתוני פרמייר ליג</h2>
-                    <div id="fpl-status-loader" class="loader my-2"></div>
-                    <p id="fpl-status-text" class="mt-3 text-sm text-gray-500 h-5">טוען נתונים חיים...</p>
-                </div>
-                <div class="flex flex-col items-center p-6 border-2 border-dashed rounded-lg">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-2">2. נתוני צ'מפיונשיפ</h2>
-                    <label for="champ-file-input" class="w-full inline-block bg-green-500 text-white font-bold py-2 px-4 rounded-lg cursor-pointer hover:bg-green-600 transition">
-                        בחר קובץ צ'מפיונשיפ
-                    </label>
-                    <input type="file" id="champ-file-input" class="hidden" accept=".json,application/json">
-                    <p id="champ-file-name" class="mt-3 text-sm text-gray-500 h-5"></p>
-                </div>
-            </div>
-            <button id="start-analysis-btn" class="mt-8 w-full bg-gray-400 text-white font-bold py-3 px-4 rounded-lg cursor-not-allowed" disabled>
-                התחל ניתוח
-            </button>
-        </div>
-    </div>
-
     <!-- Loader Screen -->
-    <div id="loader-container" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex flex-col justify-center items-center z-50">
+    <div id="loader-container" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex flex-col justify-center items-center z-50">
         <div class="loader"></div>
-        <p id="loader-text" class="mt-4 text-lg text-white">מעבד נתונים...</p>
+        <p id="loader-text" class="mt-4 text-lg text-white">טוען נתונים...</p>
     </div>
 
     <!-- Main Application (initially hidden) -->
@@ -300,11 +274,92 @@
         </div>
     </div>
 
+    <script id="championship-data" type="application/json">
+    {
+      "elements": [
+        { "id": 1001, "web_name": "Aaronson", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 60, "goals_scored": 9, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "11.3", "expected_assists": "5.7", "expected_goal_involvements": 17, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1002, "web_name": "Anthony", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 55, "goals_scored": 3, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.8", "expected_assists": "1.3", "expected_goal_involvements": 4.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1003, "web_name": "Bamford", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 60, "goals_scored": 8, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "8.4", "expected_assists": "1.1", "expected_goal_involvements": 9.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1004, "web_name": "Byram", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "0.4", "expected_goal_involvements": 1.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1005, "web_name": "Cooper", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "0.0", "expected_goal_involvements": 0.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1006, "web_name": "Cresswell", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.2", "expected_assists": "0.0", "expected_goal_involvements": 0.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1007, "web_name": "Firpo", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 5, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.4", "expected_assists": "2.2", "expected_goal_involvements": 3.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1008, "web_name": "Gnonto", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 8, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "5.7", "expected_assists": "3.3", "expected_goal_involvements": 9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1009, "web_name": "Gruev", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.4", "expected_assists": "0.8", "expected_goal_involvements": 1.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1010, "web_name": "James", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 60, "goals_scored": 13, "assists": 7, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "8.8", "expected_assists": "7.3", "expected_goal_involvements": 16.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1011, "web_name": "Kamara", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.0", "expected_assists": "1.1", "expected_goal_involvements": 2.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1012, "web_name": "Piroe", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 60, "goals_scored": 14, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "13.0", "expected_assists": "2.8", "expected_goal_involvements": 15.8, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1013, "web_name": "Rodon", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.1", "expected_assists": "0.4", "expected_goal_involvements": 1.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1014, "web_name": "Rutter", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 60, "goals_scored": 7, "assists": 15, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "11.1", "expected_assists": "11.1", "expected_goal_involvements": 22.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1015, "web_name": "Shackleton", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.2", "expected_goal_involvements": 0.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1016, "web_name": "Struijk", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 3, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.3", "expected_assists": "0.2", "expected_goal_involvements": 1.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1017, "web_name": "Summerville", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 65, "goals_scored": 19, "assists": 9, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "15.8", "expected_assists": "8.2", "expected_goal_involvements": 24, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1018, "web_name": "Al-Dakhil", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.3", "expected_assists": "0.0", "expected_goal_involvements": 0.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1019, "web_name": "Amdouni", "team": 102, "element_type": 4, "total_points": 0, "now_cost": 55, "goals_scored": 5, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "6.0", "expected_assists": "1.0", "expected_goal_involvements": 7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1020, "web_name": "Assignon", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.4", "expected_assists": "0.8", "expected_goal_involvements": 1.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1021, "web_name": "Bastien", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.1", "expected_goal_involvements": 0.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1022, "web_name": "Benson", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1023, "web_name": "Berge", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.8", "expected_assists": "1.3", "expected_goal_involvements": 4.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1024, "web_name": "Brownhill", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 4, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "4.4", "expected_assists": "1.8", "expected_goal_involvements": 6.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1025, "web_name": "Cullen", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "1.4", "expected_goal_involvements": 2.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1026, "web_name": "Esteve", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.2", "expected_assists": "0.2", "expected_goal_involvements": 0.4, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1027, "web_name": "Foster", "team": 102, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 5, "assists": 3, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "5.3", "expected_assists": "1.2", "expected_goal_involvements": 6.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1028, "web_name": "Gudmundsson", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 1, "assists": 3, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.0", "expected_assists": "1.9", "expected_goal_involvements": 2.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1029, "web_name": "Larsen", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 4, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "4.9", "expected_assists": "1.7", "expected_goal_involvements": 6.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1030, "web_name": "Muric", "team": 102, "element_type": 1, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 2, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1031, "web_name": "O'Shea", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 3, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.1", "expected_assists": "0.2", "expected_goal_involvements": 2.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1032, "web_name": "Odobert", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 3, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.2", "expected_assists": "1.7", "expected_goal_involvements": 3.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1033, "web_name": "Rodriguez", "team": 102, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.8", "expected_assists": "0.2", "expected_goal_involvements": 2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1034, "web_name": "Taylor", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.8", "expected_goal_involvements": 0.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1035, "web_name": "Trafford", "team": 102, "element_type": 1, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 2, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1036, "web_name": "Vitinho", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.9", "expected_assists": "1.3", "expected_goal_involvements": 2.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1037, "web_name": "Worrall", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.3", "expected_assists": "0.2", "expected_goal_involvements": 0.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1038, "web_name": "Aasgaard", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "3.2", "expected_assists": "1.1", "expected_goal_involvements": 4.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1039, "web_name": "Adeleke", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1040, "web_name": "Alese", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1041, "web_name": "Ba", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 3, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.4", "expected_assists": "1.5", "expected_goal_involvements": 3.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1042, "web_name": "Ballard", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 3, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.3", "expected_assists": "0.3", "expected_goal_involvements": 2.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1043, "web_name": "Bennette", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1044, "web_name": "Burstow", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.3", "expected_assists": "0.3", "expected_goal_involvements": 2.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1045, "web_name": "Chauke", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1046, "web_name": "Cirkin", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.1", "expected_goal_involvements": 0.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1047, "web_name": "Clarke", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 60, "goals_scored": 15, "assists": 4, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "11.1", "expected_assists": "5.6", "expected_goal_involvements": 16.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1048, "web_name": "Ekwah", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 5, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.2", "expected_assists": "1.0", "expected_goal_involvements": 3.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1049, "web_name": "Hemir", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.1", "expected_assists": "0.4", "expected_goal_involvements": 2.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1050, "web_name": "Hjelde", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.2", "expected_goal_involvements": 0.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1051, "web_name": "Huggins", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.3", "expected_assists": "0.4", "expected_goal_involvements": 0.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1052, "web_name": "Hume", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.7", "expected_assists": "2.8", "expected_goal_involvements": 4.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1053, "web_name": "Jobe", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 7, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "7.3", "expected_assists": "1.6", "expected_goal_involvements": 8.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1054, "web_name": "Mundle", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "0.5", "expected_goal_involvements": 1.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1055, "web_name": "Neil", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 4, "assists": 4, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.3", "expected_assists": "3.8", "expected_goal_involvements": 6.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1056, "web_name": "O'Nien", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 2, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.2", "expected_assists": "0.7", "expected_goal_involvements": 2.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1057, "web_name": "Patterson", "team": 103, "element_type": 1, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 13, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1058, "web_name": "Pritchard", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 1, "assists": 5, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.1", "expected_assists": "2.8", "expected_goal_involvements": 3.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1059, "web_name": "Roberts", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 0, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.4", "expected_assists": "2.9", "expected_goal_involvements": 5.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1060, "web_name": "Rusyn", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "3.9", "expected_assists": "0.8", "expected_goal_involvements": 4.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1061, "web_name": "Seelt", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.4", "expected_assists": "0.0", "expected_goal_involvements": 0.4, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1062, "web_name": "Semedo", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.3", "expected_assists": "0.3", "expected_goal_involvements": 1.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1063, "web_name": "Styles", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.2", "expected_assists": "0.3", "expected_goal_involvements": 0.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" }
+      ],
+      "teams": [
+        { "id": 101, "name": "Leeds United", "short_name": "LEE" },
+        { "id": 102, "name": "Burnley", "short_name": "BUR" },
+        { "id": 103, "name": "Sunderland", "short_name": "SUN" }
+      ],
+      "element_types": [
+        { "id": 1, "plural_name": "Goalkeepers", "plural_name_short": "GKP", "singular_name": "Goalkeeper", "singular_name_short": "GKP" },
+        { "id": 2, "plural_name": "Defenders", "plural_name_short": "DEF", "singular_name": "Defender", "singular_name_short": "DEF" },
+        { "id": 3, "plural_name": "Midfielders", "plural_name_short": "MID", "singular_name": "Midfielder", "singular_name_short": "MID" },
+        { "id": 4, "plural_name": "Forwards", "plural_name_short": "FWD", "singular_name": "Forward", "singular_name_short": "FWD" }
+      ]
+    }
+    </script>
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         
         let allPlayersData = [];
-        let fplData = null, champData = null;
+        let fplData = null;
 
         const uploadContainer = document.getElementById('upload-container');
         const loader = document.getElementById('loader-container');
@@ -312,10 +367,7 @@
         
         const fplStatusLoader = document.getElementById('fpl-status-loader');
         const fplStatusText = document.getElementById('fpl-status-text');
-        const champFileInput = document.getElementById('champ-file-input');
-        const champFileNameEl = document.getElementById('champ-file-name');
-        const startAnalysisBtn = document.getElementById('start-analysis-btn');
-
+        
         const rankingWeights = {
             GKP: { total_points: 8, xGc_performance: 10, clean_sheets: 6, penalties_saved: 5, saves: 4 },
             DEF: { total_points: 10, expected_goal_involvements: 8, clean_sheets: 7, xGc_performance: 3, goals_scored: 4, assists: 4 },
@@ -331,58 +383,25 @@
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 fplData = data;
-                fplStatusLoader.style.display = 'none';
-                fplStatusText.textContent = '✔️ נתונים נטענו בהצלחה';
-                checkCanStart();
+                
+                const champDataEl = document.getElementById('championship-data');
+                const champData = JSON.parse(champDataEl.textContent);
+
+                const mergedData = {
+                    ...fplData,
+                    elements: [...fplData.elements, ...champData.elements],
+                    teams: [...fplData.teams, ...champData.teams],
+                    element_types: fplData.element_types
+                };
+
+                startApp(mergedData);
+
             } catch (error) {
                 console.error("Could not fetch FPL data:", error);
-                fplStatusLoader.style.display = 'none';
-                fplStatusText.textContent = '❌ שגיאה בטעינת נתונים';
+                loader.classList.add('hidden');
+                alert('שגיאה בטעינת נתונים חיים. נסה לרענן את הדף.');
             }
         }
-
-        function readFileAsJson(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try { resolve(JSON.parse(e.target.result)); } 
-                    catch (error) { reject(new Error(`שגיאה בפענוח הקובץ: ${file.name}`)); }
-                };
-                reader.onerror = () => reject(new Error(`שגיאה בקריאת הקובץ: ${file.name}`));
-                reader.readAsText(file);
-            });
-        }
-
-        function checkCanStart() {
-            if (fplData && champData) {
-                startAnalysisBtn.disabled = false;
-                startAnalysisBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                startAnalysisBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-            }
-        }
-
-        champFileInput.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            champFileNameEl.textContent = 'טוען...';
-            try {
-                const data = await readFileAsJson(file);
-                if (!data.elements || !data.teams) throw new Error("פורמט צ'מפיונשיפ לא תקין");
-                champData = data;
-                champFileNameEl.textContent = `✔️ ${file.name}`;
-                checkCanStart();
-            } catch (error) {
-                alert(error.message);
-                champFileNameEl.textContent = '';
-                champData = null;
-            }
-        });
-
-        startAnalysisBtn.addEventListener('click', () => {
-            uploadContainer.classList.add('hidden');
-            loader.classList.remove('hidden');
-            setTimeout(() => startApp(fplData, champData), 500);
-        });
 
         function processPlayerData(data) {
             if (!data || !data.teams || !data.element_types) {
@@ -467,8 +486,8 @@
             return `<div class="tooltip-title">מדדים מובילים לדירוג</div><div class="top-metrics-grid">${metricsHtml}</div>`;
         }
 
-        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v9_draft')));
-        let watchlistPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v9_watchlist')));
+        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v2_embedded_draft')));
+        let watchlistPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v2_embedded_watchlist')));
         let sortConfig = { key: 'player_rank', direction: 'desc' };
         const SQUAD_LIMITS = { TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3 };
         const modalEl = document.getElementById('confirm-modal');
@@ -664,8 +683,8 @@
         function closeModal() { modalEl.classList.add('hidden'); }
 
         function saveAndRender() {
-            localStorage.setItem('fplDraftKit_v9_draft', JSON.stringify(Array.from(draftedPlayers.keys())));
-            localStorage.setItem('fplDraftKit_v9_watchlist', JSON.stringify(Array.from(watchlistPlayers.keys())));
+            localStorage.setItem('fplDraftKit_v2_embedded_draft', JSON.stringify(Array.from(draftedPlayers.keys())));
+            localStorage.setItem('fplDraftKit_v2_embedded_watchlist', JSON.stringify(Array.from(watchlistPlayers.keys())));
             renderTable();
             renderSquad();
             renderWatchlist();
