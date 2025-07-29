@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPL Draft Kit - V2 (Embedded Champ)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: #f3f4f6;
+        }
+        th {
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            background-color: #f9fafb;
+        }
+        td {
+            white-space: nowrap;
+        }
+        .rank-bar-container {
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            height: 0.65rem;
+            width: 100%;
+            overflow: hidden;
+        }
+        .rank-bar {
+            background: linear-gradient(to left, #34d399, #10b981);
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s ease-in-out;
+        }
+        .pitch {
+            background-color: #22c55e;
+            border: 2px solid rgba(255,255,255,0.8);
+            position: relative;
+            overflow: hidden;
+            background-image:
+                linear-gradient(to bottom, transparent 49.5%, rgba(255,255,255,0.3) 49.5%, rgba(255,255,255,0.3) 50.5%, transparent 50.5%);
+        }
+        .pitch-circle {
+            width: 90px;
+            height: 90px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .penalty-box {
+            border: 2px solid rgba(255,255,255,0.3);
+            position: absolute;
+            width: 65%;
+            left: 17.5%;
+        }
+        .penalty-box-top { height: 80px; top: 0; border-top: none; }
+        .penalty-box-bottom { height: 80px; bottom: 0; border-bottom: none; }
+        .player-shirt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            padding: 2px 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            position: relative;
+            min-width: 64px;
+            transition: transform 0.2s ease-in-out;
+        }
+        .player-shirt:hover { transform: scale(1.05); }
+        #alert-box { transition: opacity 0.5s, transform 0.5s; }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3b82f6;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tooltip { position: relative; }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 320px;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: right;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 20;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .tooltip-title {
+            font-weight: 700;
+            color: #a5f3fc;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #374151;
+        }
+        .top-metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #374151;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .metric-name { color: #d1d5db; }
+        .metric-weight { font-weight: 600; color: #34d399; }
+        .positive-diff { color: #22c55e; font-weight: bold; }
+        .negative-diff { color: #ef4444; font-weight: bold; }
+        .watchlist-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0.25rem;
+            line-height: 1;
+            color: #d1d5db;
+            transition: transform 0.2s, color 0.2s;
+        }
+        .watchlist-btn:hover {
+            transform: scale(1.2);
+            color: #f59e0b;
+        }
+        .watchlist-btn.added {
+            color: #f59e0b;
+        }
+        #watchlist .stat-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loader Screen -->
+    <div id="loader-container" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex flex-col justify-center items-center z-50">
+        <div class="loader"></div>
+        <p id="loader-text" class="mt-4 text-lg text-white">טוען נתונים...</p>
+    </div>
+
+    <!-- Main Application (initially hidden) -->
+    <div id="app" class="container mx-auto p-4 hidden">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl font-bold text-gray-900">FPL Draft Kit</h1>
+            <p class="text-lg text-gray-600 mt-2">כלי הדראפט האולטימטיבי, מבוסס נתוני FPL וצ'מפיונשיפ</p>
+        </header>
+        
+        <div id="alert-box" class="fixed top-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform -translate-y-12 z-50">
+            <p id="alert-message"></p>
+        </div>
+        
+        <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                <h3 class="text-lg font-bold mb-4" id="confirm-modal-title">אישור פעולה</h3>
+                <p id="confirm-modal-body">האם אתה בטוח שברצונך לאפס את הקבוצה?</p>
+                <div class="mt-6 flex justify-center gap-4">
+                    <button id="modal-cancel-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">ביטול</button>
+                    <button id="modal-confirm-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">אפס קבוצה</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div class="lg:col-span-3 space-y-8">
+                <!-- Unified Table Section -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">מאגר שחקנים מאוחד</h2>
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <input type="text" id="name-filter" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="חיפוש שם שחקן...">
+                        <select id="position-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                        <select id="team-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                        <select id="status-filter" class="w-full rounded-md border-gray-300 shadow-sm"></select>
+                        <div class="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="price-filter" class="block text-sm font-medium text-gray-700">מחיר מקסימלי: <span id="price-value" class="font-bold"></span></label>
+                                <input type="range" id="price-filter" min="3.5" max="14.0" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="points-filter" class="block text-sm font-medium text-gray-700">מינימום נקודות: <span id="points-value" class="font-bold"></span></label>
+                                <input type="range" id="points-filter" min="0" max="300" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow max-h-[70vh]">
+                        <table id="players-table" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th data-sort="web_name">שחקן</th>
+                                    <th data-sort="player_rank">FPL Rank</th>
+                                    <th data-sort="total_points">נקודות</th>
+                                    <th data-sort="selected_by_percent">אחוז בעלות</th>
+                                    <th data-sort="now_cost">מחיר</th>
+                                    <th data-sort="expected_goal_involvements">xGi</th>
+                                    <th data-sort="xgi_performance">xGi Perf</th>
+                                    <th data-sort="goals_scored">שערים</th>
+                                    <th data-sort="assists">בישולים</th>
+                                    <th data-sort="ict_index">ICT</th>
+                                    <th data-sort="status">סטטוס</th>
+                                </tr>
+                            </thead>
+                            <tbody id="players-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="sticky top-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-2xl font-bold">הקבוצה שלי</h2>
+                        <button id="reset-squad-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md transition text-sm">אפס קבוצה</button>
+                    </div>
+                    <div class="flex justify-between items-center my-4 bg-white p-3 rounded-lg shadow">
+                        <div id="squad-counts" class="text-xs font-semibold grid grid-cols-4 gap-2 text-center">
+                            <div>שוערים: <span id="gkp-count" class="font-bold">0</span>/2</div>
+                            <div>מגנים: <span id="def-count" class="font-bold">0</span>/5</div>
+                            <div>קשרים: <span id="mid-count" class="font-bold">0</span>/5</div>
+                            <div>חלוצים: <span id="fwd-count" class="font-bold">0</span>/3</div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-lg">£<span id="total-cost">0.0</span>m</div>
+                            <div class="text-xs text-gray-500"><span id="drafted-count">0</span>/15 שחקנים</div>
+                        </div>
+                    </div>
+                    <div id="pitch" class="pitch h-[450px] p-2 rounded-lg flex flex-col justify-around shadow-inner">
+                        <div class="pitch-circle"></div>
+                        <div class="penalty-box penalty-box-top"></div>
+                        <div class="penalty-box penalty-box-bottom"></div>
+                        <div class="relative"><div id="forwards" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
+                        <div class="relative"><div id="midfielders" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
+                        <div class="relative"><div id="defenders" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
+                        <div class="relative"><div id="goalkeepers" class="h-full flex justify-center items-center gap-2 flex-wrap"></div></div>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-xl font-bold mb-2 text-center">ספסל</h3>
+                        <div id="bench" class="bg-gray-200 p-2 rounded-lg flex justify-center items-center gap-2 flex-wrap min-h-[70px] shadow-inner"></div>
+                    </div>
+                     <!-- Watchlist Section -->
+                    <div class="mt-4">
+                        <h3 class="text-xl font-bold mb-2 text-center">Watchlist</h3>
+                        <div id="watchlist" class="bg-white rounded-lg shadow min-h-[100px] max-h-48 overflow-y-auto">
+                            <!-- Watchlist players will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script id="championship-data" type="application/json">
+    {
+      "elements": [
+        { "id": 1001, "web_name": "Aaronson", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 60, "goals_scored": 9, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "11.3", "expected_assists": "5.7", "expected_goal_involvements": 17, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1002, "web_name": "Anthony", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 55, "goals_scored": 3, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.8", "expected_assists": "1.3", "expected_goal_involvements": 4.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1003, "web_name": "Bamford", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 60, "goals_scored": 8, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "8.4", "expected_assists": "1.1", "expected_goal_involvements": 9.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1004, "web_name": "Byram", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "0.4", "expected_goal_involvements": 1.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1005, "web_name": "Cooper", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "0.0", "expected_goal_involvements": 0.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1006, "web_name": "Cresswell", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.2", "expected_assists": "0.0", "expected_goal_involvements": 0.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1007, "web_name": "Firpo", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 5, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.4", "expected_assists": "2.2", "expected_goal_involvements": 3.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1008, "web_name": "Gnonto", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 8, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "5.7", "expected_assists": "3.3", "expected_goal_involvements": 9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1009, "web_name": "Gruev", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.4", "expected_assists": "0.8", "expected_goal_involvements": 1.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1010, "web_name": "James", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 60, "goals_scored": 13, "assists": 7, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "8.8", "expected_assists": "7.3", "expected_goal_involvements": 16.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1011, "web_name": "Kamara", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.0", "expected_assists": "1.1", "expected_goal_involvements": 2.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1012, "web_name": "Piroe", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 60, "goals_scored": 14, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "13.0", "expected_assists": "2.8", "expected_goal_involvements": 15.8, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1013, "web_name": "Rodon", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.1", "expected_assists": "0.4", "expected_goal_involvements": 1.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1014, "web_name": "Rutter", "team": 101, "element_type": 4, "total_points": 0, "now_cost": 60, "goals_scored": 7, "assists": 15, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "11.1", "expected_assists": "11.1", "expected_goal_involvements": 22.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1015, "web_name": "Shackleton", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.2", "expected_goal_involvements": 0.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1016, "web_name": "Struijk", "team": 101, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 3, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.3", "expected_assists": "0.2", "expected_goal_involvements": 1.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1017, "web_name": "Summerville", "team": 101, "element_type": 3, "total_points": 0, "now_cost": 65, "goals_scored": 19, "assists": 9, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "15.8", "expected_assists": "8.2", "expected_goal_involvements": 24, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1018, "web_name": "Al-Dakhil", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.3", "expected_assists": "0.0", "expected_goal_involvements": 0.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1019, "web_name": "Amdouni", "team": 102, "element_type": 4, "total_points": 0, "now_cost": 55, "goals_scored": 5, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "6.0", "expected_assists": "1.0", "expected_goal_involvements": 7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1020, "web_name": "Assignon", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.4", "expected_assists": "0.8", "expected_goal_involvements": 1.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1021, "web_name": "Bastien", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.1", "expected_goal_involvements": 0.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1022, "web_name": "Benson", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1023, "web_name": "Berge", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.8", "expected_assists": "1.3", "expected_goal_involvements": 4.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1024, "web_name": "Brownhill", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 4, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "4.4", "expected_assists": "1.8", "expected_goal_involvements": 6.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1025, "web_name": "Cullen", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "1.4", "expected_goal_involvements": 2.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1026, "web_name": "Esteve", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.2", "expected_assists": "0.2", "expected_goal_involvements": 0.4, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1027, "web_name": "Foster", "team": 102, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 5, "assists": 3, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "5.3", "expected_assists": "1.2", "expected_goal_involvements": 6.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1028, "web_name": "Gudmundsson", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 1, "assists": 3, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.0", "expected_assists": "1.9", "expected_goal_involvements": 2.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1029, "web_name": "Larsen", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 4, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "4.9", "expected_assists": "1.7", "expected_goal_involvements": 6.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1030, "web_name": "Muric", "team": 102, "element_type": 1, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 2, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1031, "web_name": "O'Shea", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 3, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.1", "expected_assists": "0.2", "expected_goal_involvements": 2.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1032, "web_name": "Odobert", "team": 102, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 3, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.2", "expected_assists": "1.7", "expected_goal_involvements": 3.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1033, "web_name": "Rodriguez", "team": 102, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.8", "expected_assists": "0.2", "expected_goal_involvements": 2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1034, "web_name": "Taylor", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.8", "expected_goal_involvements": 0.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1035, "web_name": "Trafford", "team": 102, "element_type": 1, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 2, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1036, "web_name": "Vitinho", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.9", "expected_assists": "1.3", "expected_goal_involvements": 2.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1037, "web_name": "Worrall", "team": 102, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.3", "expected_assists": "0.2", "expected_goal_involvements": 0.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1038, "web_name": "Aasgaard", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "3.2", "expected_assists": "1.1", "expected_goal_involvements": 4.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1039, "web_name": "Adeleke", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1040, "web_name": "Alese", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1041, "web_name": "Ba", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 3, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.4", "expected_assists": "1.5", "expected_goal_involvements": 3.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1042, "web_name": "Ballard", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 3, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.3", "expected_assists": "0.3", "expected_goal_involvements": 2.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1043, "web_name": "Bennette", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1044, "web_name": "Burstow", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.3", "expected_assists": "0.3", "expected_goal_involvements": 2.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1045, "web_name": "Chauke", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1046, "web_name": "Cirkin", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.1", "expected_goal_involvements": 0.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1047, "web_name": "Clarke", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 60, "goals_scored": 15, "assists": 4, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "11.1", "expected_assists": "5.6", "expected_goal_involvements": 16.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1048, "web_name": "Ekwah", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 5, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.2", "expected_assists": "1.0", "expected_goal_involvements": 3.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1049, "web_name": "Hemir", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.1", "expected_assists": "0.4", "expected_goal_involvements": 2.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1050, "web_name": "Hjelde", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.1", "expected_assists": "0.2", "expected_goal_involvements": 0.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1051, "web_name": "Huggins", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.3", "expected_assists": "0.4", "expected_goal_involvements": 0.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1052, "web_name": "Hume", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.7", "expected_assists": "2.8", "expected_goal_involvements": 4.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1053, "web_name": "Jobe", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 7, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "7.3", "expected_assists": "1.6", "expected_goal_involvements": 8.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1054, "web_name": "Mundle", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 1, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.7", "expected_assists": "0.5", "expected_goal_involvements": 1.2, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1055, "web_name": "Neil", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 4, "assists": 4, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.3", "expected_assists": "3.8", "expected_goal_involvements": 6.1, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1056, "web_name": "O'Nien", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 45, "goals_scored": 2, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.2", "expected_assists": "0.7", "expected_goal_involvements": 2.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1057, "web_name": "Patterson", "team": 103, "element_type": 1, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 0, "clean_sheets": 13, "saves": 0, "penalties_saved": 0, "expected_goals": "0.0", "expected_assists": "0.0", "expected_goal_involvements": 0, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1058, "web_name": "Pritchard", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 50, "goals_scored": 1, "assists": 5, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.1", "expected_assists": "2.8", "expected_goal_involvements": 3.9, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1059, "web_name": "Roberts", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 55, "goals_scored": 0, "assists": 2, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "2.4", "expected_assists": "2.9", "expected_goal_involvements": 5.3, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1060, "web_name": "Rusyn", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "3.9", "expected_assists": "0.8", "expected_goal_involvements": 4.7, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1061, "web_name": "Seelt", "team": 103, "element_type": 2, "total_points": 0, "now_cost": 40, "goals_scored": 0, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.4", "expected_assists": "0.0", "expected_goal_involvements": 0.4, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1062, "web_name": "Semedo", "team": 103, "element_type": 4, "total_points": 0, "now_cost": 50, "goals_scored": 2, "assists": 0, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "1.3", "expected_assists": "0.3", "expected_goal_involvements": 1.6, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" },
+        { "id": 1063, "web_name": "Styles", "team": 103, "element_type": 3, "total_points": 0, "now_cost": 45, "goals_scored": 0, "assists": 1, "clean_sheets": 0, "saves": 0, "penalties_saved": 0, "expected_goals": "0.2", "expected_assists": "0.3", "expected_goal_involvements": 0.5, "expected_goals_conceded": "0", "ict_index": "0", "threat": "0", "creativity": "0", "influence": "0", "selected_by_percent": "0.0", "status": "a" }
+      ],
+      "teams": [
+        { "id": 101, "name": "Leeds United", "short_name": "LEE" },
+        { "id": 102, "name": "Burnley", "short_name": "BUR" },
+        { "id": 103, "name": "Sunderland", "short_name": "SUN" }
+      ],
+      "element_types": [
+        { "id": 1, "plural_name": "Goalkeepers", "plural_name_short": "GKP", "singular_name": "Goalkeeper", "singular_name_short": "GKP" },
+        { "id": 2, "plural_name": "Defenders", "plural_name_short": "DEF", "singular_name": "Defender", "singular_name_short": "DEF" },
+        { "id": 3, "plural_name": "Midfielders", "plural_name_short": "MID", "singular_name": "Midfielder", "singular_name_short": "MID" },
+        { "id": 4, "plural_name": "Forwards", "plural_name_short": "FWD", "singular_name": "Forward", "singular_name_short": "FWD" }
+      ]
+    }
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        let allPlayersData = [];
+        let fplData = null;
+
+        const uploadContainer = document.getElementById('upload-container');
+        const loader = document.getElementById('loader-container');
+        const app = document.getElementById('app');
+        
+        const fplStatusLoader = document.getElementById('fpl-status-loader');
+        const fplStatusText = document.getElementById('fpl-status-text');
+        
+        const rankingWeights = {
+            GKP: { total_points: 8, xGc_performance: 10, clean_sheets: 6, penalties_saved: 5, saves: 4 },
+            DEF: { total_points: 10, expected_goal_involvements: 8, clean_sheets: 7, xGc_performance: 3, goals_scored: 4, assists: 4 },
+            MID: { total_points: 10, expected_goal_involvements: 9, xgi_performance: 6, ict_index: 5, threat: 5, actual_goal_involvements: 4 },
+            FWD: { total_points: 10, expected_goal_involvements: 9, xgi_performance: 7, threat: 6, actual_goal_involvements: 5, ict_index: 4 }
+        };
+
+        async function fetchFplData() {
+            const CORS_PROXY = `https://corsproxy.io/?`;
+            const FPL_API_URL = `${CORS_PROXY}${encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/')}`;
+            try {
+                const response = await fetch(FPL_API_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                fplData = data;
+                
+                const champDataEl = document.getElementById('championship-data');
+                const champData = JSON.parse(champDataEl.textContent);
+
+                const mergedData = {
+                    ...fplData,
+                    elements: [...fplData.elements, ...champData.elements],
+                    teams: [...fplData.teams, ...champData.teams],
+                    element_types: fplData.element_types
+                };
+
+                startApp(mergedData);
+
+            } catch (error) {
+                console.error("Could not fetch FPL data:", error);
+                loader.classList.add('hidden');
+                alert('שגיאה בטעינת נתונים חיים. נסה לרענן את הדף.');
+            }
+        }
+
+        function processPlayerData(data) {
+            if (!data || !data.teams || !data.element_types) {
+                console.error("Invalid data passed to processPlayerData:", data);
+                return [];
+            }
+            const teamsMap = new Map(data.teams.map(t => [t.id, t.name]));
+            const posMap = new Map(data.element_types.map(p => [p.id, p.singular_name_short]));
+            
+            return data.elements.map(p => {
+                const xgi = parseFloat(p.expected_goal_involvements) || 0;
+                const actual_gi = (p.goals_scored || 0) + (p.assists || 0);
+                const xgc = parseFloat(p.expected_goals_conceded) || 0;
+                const actual_gc = p.goals_conceded || 0;
+
+                return { 
+                    ...p, 
+                    team_name: teamsMap.get(p.team), 
+                    position: posMap.get(p.element_type),
+                    xgi_performance: (xgi - actual_gi),
+                    xGc_performance: (xgc - actual_gc),
+                    actual_goal_involvements: actual_gi
+                }
+            });
+        }
+
+        function scaleValues(data, key) {
+            const values = data.map(p => parseFloat(p[key])).filter(v => !isNaN(v));
+            if (values.length === 0) return data.map(() => 0);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            if (max === min) return data.map(p => isNaN(parseFloat(p[key])) ? 0 : 0.5);
+            return data.map(p => isNaN(parseFloat(p[key])) ? 0 : (parseFloat(p[key]) - min) / (max - min));
+        }
+
+        function calculateRanks(players) {
+            const metricsToNormalize = new Set();
+            Object.values(rankingWeights).forEach(posWeights => Object.keys(posWeights).forEach(metric => metricsToNormalize.add(metric)));
+            
+            const normalized = {};
+            metricsToNormalize.forEach(metric => {
+                normalized[metric] = scaleValues(players, metric);
+            });
+
+            players.forEach((player, index) => {
+                let totalWeight = 0;
+                let weightedScore = 0;
+                const weights = rankingWeights[player.position];
+                player.rank_breakdown = [];
+
+                if (weights) {
+                    for (const [metric, weight] of Object.entries(weights)) {
+                         if (normalized[metric] && normalized[metric][index] !== undefined) {
+                            const metricScore = normalized[metric][index] * weight;
+                            weightedScore += metricScore;
+                            totalWeight += Math.abs(weight);
+                            player.rank_breakdown.push({ metric, score: metricScore, weight, raw_value: player[metric] });
+                        }
+                    }
+                }
+                player.player_rank = totalWeight > 0 ? (weightedScore / totalWeight) * 100 : 0;
+                player.player_rank = Math.max(0, player.player_rank);
+
+                player.rank_breakdown.sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+            });
+        }
+        
+        function generateRankTooltip(player) {
+            if (!player.rank_breakdown) return '';
+            const topMetrics = player.rank_breakdown.slice(0, 3);
+            let metricsHtml = topMetrics.map(item => {
+                let metricName = item.metric.replace(/_/g, ' ');
+                let rawValue = item.raw_value;
+                if (typeof rawValue === 'number' && !Number.isInteger(rawValue)) {
+                    rawValue = rawValue.toFixed(2);
+                }
+                return `<div class="metric-item">
+                          <span class="metric-name">${metricName} (${rawValue})</span>
+                          <span class="metric-weight">תרומה: ${item.score.toFixed(1)}</span>
+                        </div>`;
+            }).join('');
+            return `<div class="tooltip-title">מדדים מובילים לדירוג</div><div class="top-metrics-grid">${metricsHtml}</div>`;
+        }
+
+        let draftedPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v2_embedded_draft')));
+        let watchlistPlayers = new Map(JSON.parse(localStorage.getItem('fplDraftKit_v2_embedded_watchlist')));
+        let sortConfig = { key: 'player_rank', direction: 'desc' };
+        const SQUAD_LIMITS = { TOTAL: 15, GKP: 2, DEF: 5, MID: 5, FWD: 3 };
+        const modalEl = document.getElementById('confirm-modal');
+
+        function setupFilters(dataSet) {
+            const playerPositions = ['GKP', 'DEF', 'MID', 'FWD'];
+            const positions = [...new Set(dataSet.map(p => p.position))].filter(p => playerPositions.includes(p)).sort();
+            const teams = [...new Set(dataSet.map(p => p.team_name))].filter(Boolean).sort();
+            
+            const posEl = document.getElementById(`position-filter`);
+            const teamEl = document.getElementById(`team-filter`);
+            const statusEl = document.getElementById(`status-filter`);
+            const priceEl = document.getElementById(`price-filter`);
+            const priceValEl = document.getElementById(`price-value`);
+            const pointsEl = document.getElementById(`points-filter`);
+            const pointsValEl = document.getElementById(`points-value`);
+
+            posEl.innerHTML = '<option value="">כל העמדות</option>' + positions.map(p => `<option value="${p}">${p}</option>`).join('');
+            teamEl.innerHTML = '<option value="">כל הקבוצות</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
+            statusEl.innerHTML = `<option value="">כל הסטטוסים</option><option value="a">זמינים</option><option value="d">בספק</option><option value="i">פצועים</option><option value="u">לא זמינים</option>`;
+            
+            priceEl.value = priceEl.max;
+            priceValEl.textContent = `£${priceEl.value}m`;
+            pointsEl.value = pointsEl.min;
+            pointsValEl.textContent = pointsEl.value;
+        }
+        
+        function sortData(data, config) {
+            data.sort((a, b) => {
+                let valA = a[config.key], valB = b[config.key];
+                if (typeof valA === 'string') {
+                    const numA = parseFloat(valA), numB = parseFloat(valB);
+                    if (!isNaN(numA) && !isNaN(numB)) return config.direction === 'asc' ? numA - numB : numB - numA;
+                    return config.direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                if (valA === null || valA === undefined) valA = -Infinity;
+                if (valB === null || valB === undefined) valB = -Infinity;
+                return config.direction === 'asc' ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+            });
+        }
+
+        function renderTable() {
+            const nameFilter = document.getElementById(`name-filter`).value.toLowerCase();
+            const posFilter = document.getElementById(`position-filter`).value;
+            const teamFilter = document.getElementById(`team-filter`).value;
+            const statusFilter = document.getElementById(`status-filter`).value;
+            const priceFilter = parseFloat(document.getElementById(`price-filter`).value);
+            const pointsFilter = parseInt(document.getElementById(`points-filter`).value);
+            
+            document.getElementById(`price-value`).textContent = `£${priceFilter}m`;
+            document.getElementById(`points-value`).textContent = pointsFilter;
+
+            let filteredData = allPlayersData.filter(p => {
+                if (draftedPlayers.has(p.id)) return false;
+                return p.web_name.toLowerCase().includes(nameFilter) &&
+                       (!posFilter || p.position === posFilter) &&
+                       (!teamFilter || p.team_name === teamFilter) &&
+                       (!statusFilter || p.status === statusFilter) &&
+                       (p.now_cost / 10) <= priceFilter &&
+                       p.total_points >= pointsFilter;
+            });
+
+            sortData(filteredData, sortConfig);
+
+            const statusMap = { 'a': '✅', 'd': '❓', 'i': '🚑', 'u': '❌', 'n': '❌' };
+            const tableBodyHTML = filteredData.map(p => {
+                const xgiPerf = parseFloat(p.xgi_performance);
+                const perfClass = xgiPerf < 0 ? 'positive-diff' : (xgiPerf > 0 ? 'negative-diff' : '');
+                const xgiPerfDisplay = (xgiPerf > 0 ? '+' : '') + xgiPerf.toFixed(2);
+                const isWatched = watchlistPlayers.has(p.id);
+
+                return `
+                <tr class="hover:bg-gray-50 transition-colors duration-200">
+                    <td class="px-3 py-2"><div class="flex items-center"><button class="draft-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 rounded-md transition ml-2 text-sm" data-id="${p.id}">בחר</button><button class="watchlist-btn ${isWatched ? 'added' : ''}" data-id="${p.id}" title="הוסף למעקב">⭐</button><div><div class="font-bold ml-2">${p.web_name}</div><div class="text-xs text-gray-500 ml-2">${p.team_name} - ${p.position}</div></div></div></td>
+                    <td class="px-3 py-2 tooltip"><div class="flex items-center"><span class="font-semibold w-10">${(p.player_rank || 0).toFixed(1)}</span><div class="w-full rank-bar-container ml-2"><div class="rank-bar" style="width: ${p.player_rank || 0}%"></div></div></div><div class="tooltiptext">${generateRankTooltip(p)}</div></td>
+                    <td class="px-2 py-2 text-sm text-center font-bold">${p.total_points || 0}</td>
+                    <td class="px-2 py-2 text-sm text-center">${p.selected_by_percent}%</td>
+                    <td class="px-2 py-2 text-sm text-center font-semibold">£${(p.now_cost / 10).toFixed(1)}m</td>
+                    <td class="px-2 py-2 text-sm text-center text-gray-600">${parseFloat(p.expected_goal_involvements || 0).toFixed(2)}</td>
+                    <td class="px-2 py-2 text-sm text-center ${perfClass}">${xgiPerfDisplay}</td>
+                    <td class="px-2 py-2 text-sm text-center text-gray-600">${p.goals_scored || 0}</td>
+                    <td class="px-2 py-2 text-sm text-center text-gray-600">${p.assists || 0}</td>
+                    <td class="px-2 py-2 text-sm text-center">${p.ict_index}</td>
+                    <td class="px-2 py-2 text-sm text-center text-2xl" title="${p.news || 'אין חדשות'}">${statusMap[p.status] || '❓'}</td>
+                </tr>`;
+            }).join('');
+            document.getElementById(`players-table-body`).innerHTML = tableBodyHTML;
+        }
+
+        function renderSquad() {
+            const positions = { GKP: [], DEF: [], MID: [], FWD: [] };
+            let totalCost = 0;
+            draftedPlayers.forEach(id => {
+                const player = allPlayersData.find(p => p.id === id);
+                if (player) {
+                    positions[player.position].push(player);
+                    totalCost += player.now_cost / 10;
+                }
+            });
+
+            document.getElementById('goalkeepers').innerHTML = positions.GKP.map(p => createPlayerShirt(p)).join('');
+            document.getElementById('defenders').innerHTML = positions.DEF.map(p => createPlayerShirt(p)).join('');
+            document.getElementById('midfielders').innerHTML = positions.MID.map(p => createPlayerShirt(p)).join('');
+            document.getElementById('forwards').innerHTML = positions.FWD.map(p => createPlayerShirt(p)).join('');
+            document.getElementById('bench').innerHTML = '';
+
+            document.getElementById('total-cost').textContent = totalCost.toFixed(1);
+            document.getElementById('drafted-count').textContent = draftedPlayers.size;
+            document.getElementById('gkp-count').textContent = positions.GKP.length;
+            document.getElementById('def-count').textContent = positions.DEF.length;
+            document.getElementById('mid-count').textContent = positions.MID.length;
+            document.getElementById('fwd-count').textContent = positions.FWD.length;
+        }
+
+        function renderWatchlist() {
+            const watchlistEl = document.getElementById('watchlist');
+            if (watchlistPlayers.size === 0) {
+                watchlistEl.innerHTML = `<p class="text-center text-gray-500 p-4">רשימת המעקב שלך ריקה.</p>`;
+                return;
+            }
+
+            let html = '<div class="divide-y divide-gray-200">';
+            watchlistPlayers.forEach(id => {
+                const player = allPlayersData.find(p => p.id === id);
+                if (player) {
+                    html += `
+                    <div class="p-2 flex items-center justify-between hover:bg-gray-50">
+                        <div class="w-1/3">
+                            <div class="font-bold text-sm truncate">${player.web_name}</div>
+                            <div class="text-xs text-gray-500 truncate">${player.team_name}</div>
+                        </div>
+                        <div class="w-1/2 flex justify-around text-xs text-center">
+                            <div><div class="font-bold">${player.player_rank.toFixed(1)}</div><div class="stat-label">Rank</div></div>
+                            <div><div class="font-bold">${player.selected_by_percent}%</div><div class="stat-label">Own%</div></div>
+                            <div><div class="font-bold">£${(player.now_cost / 10).toFixed(1)}</div><div class="stat-label">Price</div></div>
+                            <div><div class="font-bold">${player.points_per_game}</div><div class="stat-label">PPG</div></div>
+                        </div>
+                        <div class="w-1/6 flex items-center justify-end gap-2">
+                            <button class="draft-from-watchlist-btn bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-1 px-2 rounded" data-id="${player.id}" title="בחר לקבוצה">✔️</button>
+                            <button class="remove-from-watchlist-btn text-red-500 hover:text-red-700 text-xl font-bold" data-id="${player.id}" title="הסר מהרשימה">&times;</button>
+                        </div>
+                    </div>`;
+                }
+            });
+            html += '</div>';
+            watchlistEl.innerHTML = html;
+        }
+
+        function createPlayerShirt(player) {
+            const teamColors = {'Man City':'bg-sky-300','Liverpool':'bg-red-500 text-white','Arsenal':'bg-red-600 text-white','Newcastle':'bg-gray-800 text-white','Aston Villa':'bg-purple-900 text-yellow-300','Man Utd':'bg-red-600 text-white','Brighton':'bg-blue-500 text-white','Brentford':'bg-red-500 text-white','Tottenham':'bg-gray-100 text-blue-900','Spurs':'bg-gray-100 text-blue-900','Chelsea':'bg-blue-700 text-white','West Ham':'bg-purple-800 text-sky-300','Everton':'bg-blue-800 text-white', 'Leicester': 'bg-blue-600 text-white', 'Ipswich': 'bg-blue-700 text-white', 'Southampton': 'bg-red-600 text-white', 'Nott\'m Forest': 'bg-red-600 text-white', 'Fulham': 'bg-gray-100 text-black border border-gray-400', 'Wolves': 'bg-yellow-500 text-black', 'Crystal Palace': 'bg-blue-700 text-red-600', 'Bournemouth': 'bg-red-600 text-black', 'Leeds United': 'bg-yellow-300 text-blue-800', 'Burnley': 'bg-red-800 text-sky-300', 'Sunderland': 'bg-red-600 text-white'};
+            const colorClass = teamColors[player.team_name] || 'bg-gray-200';
+            return `<div class="player-shirt ${colorClass} undraft-btn" data-id="${player.id}" title="לחץ להסרה"><div class="font-bold text-sm truncate">${player.web_name}</div><div class="text-xs">£${(player.now_cost / 10).toFixed(1)}m</div></div>`;
+        }
+        
+        function handleDraft(id) {
+            const player = allPlayersData.find(p => p.id === id);
+            if (!player) return;
+            const currentCounts = { GKP: 0, DEF: 0, MID: 0, FWD: 0 };
+            draftedPlayers.forEach(pid => {
+                const p = allPlayersData.find(pl => pl.id === pid);
+                if(p) currentCounts[p.position]++;
+            });
+            if (draftedPlayers.size >= SQUAD_LIMITS.TOTAL) { showAlert("הסגל מלא (15 שחקנים)."); return; }
+            if (currentCounts[player.position] >= SQUAD_LIMITS[player.position]) { showAlert(`מכסת ה-${player.position} מלאה.`); return; }
+            
+            draftedPlayers.set(player.id, player.id);
+            watchlistPlayers.delete(player.id);
+            saveAndRender();
+        }
+
+        function handleUndraft(id) {
+            draftedPlayers.delete(id);
+            saveAndRender();
+        }
+
+        function handleWatchlistToggle(id) {
+            if (watchlistPlayers.has(id)) {
+                watchlistPlayers.delete(id);
+            } else {
+                watchlistPlayers.set(id, id);
+            }
+            saveAndRender();
+        }
+        
+        function handleReset() { modalEl.classList.remove('hidden'); }
+        function confirmReset() {
+            draftedPlayers.clear();
+            watchlistPlayers.clear();
+            saveAndRender();
+            showAlert("הקבוצה ורשימת המעקב אופסו בהצלחה.");
+            closeModal();
+        }
+        function closeModal() { modalEl.classList.add('hidden'); }
+
+        function saveAndRender() {
+            localStorage.setItem('fplDraftKit_v2_embedded_draft', JSON.stringify(Array.from(draftedPlayers.keys())));
+            localStorage.setItem('fplDraftKit_v2_embedded_watchlist', JSON.stringify(Array.from(watchlistPlayers.keys())));
+            renderTable();
+            renderSquad();
+            renderWatchlist();
+        }
+        
+        function showAlert(message) {
+            const alertBox = document.getElementById('alert-box');
+            document.getElementById('alert-message').textContent = message;
+            alertBox.classList.remove('opacity-0', '-translate-y-12');
+            alertBox.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                alertBox.classList.remove('opacity-100', 'translate-y-0');
+                alertBox.classList.add('opacity-0', '-translate-y-12');
+            }, 3000);
+        }
+
+        function startApp(mergedData) {
+            allPlayersData = processPlayerData(mergedData);
+            calculateRanks(allPlayersData); 
+            setupFilters(allPlayersData);
+            saveAndRender();
+            
+            loader.classList.add('hidden');
+            app.classList.remove('hidden');
+            
+            // Event Listeners
+            document.querySelectorAll('#name-filter, #position-filter, #team-filter, #status-filter, #price-filter, #points-filter').forEach(el => {
+                el.addEventListener('input', renderTable);
+            });
+
+            document.querySelector('#players-table thead').addEventListener('click', (e) => {
+                const th = e.target.closest('th');
+                if (!th || !th.dataset.sort) return;
+                const key = th.dataset.sort;
+                sortConfig.direction = (sortConfig.key === key && sortConfig.direction === 'desc') ? 'asc' : 'desc';
+                sortConfig.key = key;
+                renderTable();
+            });
+
+            document.getElementById(`players-table-body`).addEventListener('click', e => {
+                const draftBtn = e.target.closest('.draft-btn');
+                if (draftBtn) handleDraft(parseInt(draftBtn.dataset.id));
+                
+                const watchlistBtn = e.target.closest('.watchlist-btn');
+                if (watchlistBtn) handleWatchlistToggle(parseInt(watchlistBtn.dataset.id));
+            });
+
+            document.getElementById('watchlist').addEventListener('click', e => {
+                const draftBtn = e.target.closest('.draft-from-watchlist-btn');
+                if (draftBtn) handleDraft(parseInt(draftBtn.dataset.id));
+
+                const removeBtn = e.target.closest('.remove-from-watchlist-btn');
+                if (removeBtn) handleWatchlistToggle(parseInt(removeBtn.dataset.id));
+            });
+
+            document.getElementById('reset-squad-btn').addEventListener('click', handleReset);
+            document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+            document.getElementById('modal-confirm-btn').addEventListener('click', confirmReset);
+
+            document.getElementById('pitch').addEventListener('click', e => {
+                const shirt = e.target.closest('.undraft-btn');
+                if (shirt) handleUndraft(parseInt(shirt.dataset.id));
+            });
+            document.getElementById('bench').addEventListener('click', e => {
+                const shirt = e.target.closest('.undraft-btn');
+                if (shirt) handleUndraft(parseInt(shirt.dataset.id));
+            });
+        }
+        
+        // Auto-start the FPL data fetch on page load
+        fetchFplData();
+    });
+    </script>
+</body>
+</html>
